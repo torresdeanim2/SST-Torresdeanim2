@@ -1,0 +1,2907 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros Operacionales - Torres de Anim II</title>
+    
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1f4e78;
+            --secondary: #2e5c8a;
+            --accent: #4a90e2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light-bg: #f8fafc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--light-bg);
+            color: #1e293b;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 15px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Form Container */
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #334155;
+        }
+
+        .required {
+            color: var(--danger);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .file-upload {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            border-color: var(--accent);
+            background: #f1f5f9;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .uploaded-files {
+            margin-top: 10px;
+        }
+
+        .file-item {
+            background: #f1f5f9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-remove {
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Table */
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .records-table th,
+        .records-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .records-table th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .records-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Checklist */
+        .checklist {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        /* Progress */
+        .progress-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .progress-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--accent));
+            transition: width 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="pageTitle">📝 Registros Operacionales Torres de Anim II</h1>
+            <p id="pageSubtitle">Sistema de Gestión SST 2026</p>
+            <button class="back-btn" onclick="window.close()">← Volver al Sistema</button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showForm('induccion')">🎓 Inducción/Reinducción</button>
+            <button class="tab" onclick="showForm('inspecciones')">🔍 Inspecciones</button>
+            <button class="tab" onclick="showForm('mantenimiento')">🔧 Mantenimiento</button>
+            <button class="tab" onclick="showForm('contratistas')">🏗️ Contratistas</button>
+            <button class="tab" onclick="showForm('accidentes')">⚠️ Accidentes</button>
+            <button class="tab" onclick="showForm('simulacros')">🚨 Simulacros</button>
+        </div>
+
+
+        <!-- FORM 1: INDUCCIÓN/REINDUCCIÓN -->
+        <div id="form-induccion" class="tab-content active">
+            <div class="progress-info">
+                <div class="progress-stat">
+                    <strong>Progreso Mensual 2026</strong>
+                    <span id="induccion-progress">0/12 meses completados</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="induccion-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <h2 class="form-title">Registro de Inducción y Reinducción SST</h2>
+                
+                <div class="alert alert-info">
+                    <strong>📋 Frecuencia:</strong> Mensual | <strong>📅 Próximo registro:</strong> Enero 2026
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+     FORMULARIO 1/7: INDUCCIÓN/REINDUCCIÓN - CORREGIDO
+     ✅ Todos los campos tienen "name"
+     ✅ JavaScript captura TODO
+     ✅ Guarda en Firebase: edificios/anim2/inducciones/
+     ✅ Muestra progreso REAL
+     ═══════════════════════════════════════════════════════════════ -->
+
+<form id="formInduccion">
+    <div class="form-section">
+        <h3 class="section-title">Información General</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Mes <span class="required">*</span></label>
+                <select name="mes" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Enero 2026">Enero 2026</option>
+                    <option value="Febrero 2026">Febrero 2026</option>
+                    <option value="Marzo 2026">Marzo 2026</option>
+                    <option value="Abril 2026">Abril 2026</option>
+                    <option value="Mayo 2026">Mayo 2026</option>
+                    <option value="Junio 2026">Junio 2026</option>
+                    <option value="Julio 2026">Julio 2026</option>
+                    <option value="Agosto 2026">Agosto 2026</option>
+                    <option value="Septiembre 2026">Septiembre 2026</option>
+                    <option value="Octubre 2026">Octubre 2026</option>
+                    <option value="Noviembre 2026">Noviembre 2026</option>
+                    <option value="Diciembre 2026">Diciembre 2026</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha de Realización <span class="required">*</span></label>
+                <input type="date" name="fecha" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tipo de Capacitación <span class="required">*</span></label>
+                <select name="tipo" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Inducción SST">Inducción SST</option>
+                    <option value="Reinducción Anual">Reinducción Anual</option>
+                    <option value="Capacitación Específica">Capacitación Específica</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Detalles de la Capacitación</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Tema Principal <span class="required">*</span></label>
+                <input type="text" name="tema" class="form-input" placeholder="Ej: Prevención de Riesgos Locativos" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Duración (horas) <span class="required">*</span></label>
+                <input type="number" name="duracion" class="form-input" placeholder="2" min="0" step="0.5" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Responsable/Instructor <span class="required">*</span></label>
+                <input type="text" name="responsable" class="form-input" value="Carla Castellano - Asesoría SST" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Temas Tratados <span class="required">*</span></label>
+            <textarea name="temasTratados" class="form-textarea" placeholder="Describa los temas principales de la capacitación..." required></textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Asistentes</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Personal Contratista 1 <span class="required">*</span></label>
+                <input type="number" name="asistentesContratista1" id="asistentesContratista1" class="form-input" placeholder="Número de asistentes" min="0" required onchange="calcularTotalAsistentes()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Personal Contratista 2 <span class="required">*</span></label>
+                <input type="number" name="asistentesContratista2" id="asistentesContratista2" class="form-input" placeholder="Número de asistentes" min="0" required onchange="calcularTotalAsistentes()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Total Asistentes <span class="required">*</span></label>
+                <input type="number" name="totalAsistentes" id="totalAsistentes" class="form-input" placeholder="Total" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Evaluación de Aprendizaje</h3>
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" name="evaluacionRealizada" id="eval1" value="true">
+                <label for="eval1">Se realizó evaluación de conocimientos</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="demostraronComprension" id="eval2" value="true">
+                <label for="eval2">Los asistentes demostraron comprensión de los temas</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="materialDidactico" id="eval3" value="true">
+                <label for="eval3">Se entregó material didáctico</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="certificadosEmitidos" id="eval4" value="true">
+                <label for="eval4">Se emitieron certificados de asistencia</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Observaciones</label>
+            <textarea name="observaciones" class="form-textarea" placeholder="Observaciones adicionales sobre la capacitación..."></textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Documentos Soporte</h3>
+        <div class="file-upload" onclick="document.getElementById('fileInduccion').click()">
+            <p>📎 Click para adjuntar archivos</p>
+            <small>Lista de asistencia, fotos, presentaciones, evaluaciones</small>
+            <input type="file" id="fileInduccion" name="archivos" multiple accept=".pdf,.jpg,.png,.xlsx,.docx" onchange="handleFileChange('fileInduccion','filesInduccion','induccion')">
+        </div>
+        <div class="uploaded-files" id="filesInduccion"></div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="limpiarFormulario('formInduccion')">🔄 Limpiar</button>
+        <button type="submit" class="btn btn-primary">💾 Guardar Registro</button>
+    </div>
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// FUNCIONES AUXILIARES
+// ═══════════════════════════════════════════════════════════════
+
+let editandoInduccionId = null;
+
+function editarInduccion(id, data) {
+    editandoInduccionId = id;
+
+    // Poblar formulario
+    const f = document.getElementById('formInduccion');
+    f.querySelector('[name="mes"]').value = data.mes || '';
+    f.querySelector('[name="fecha"]').value = data.fecha || '';
+    f.querySelector('[name="tipo"]').value = data.tipo || '';
+    f.querySelector('[name="tema"]').value = data.tema || '';
+    f.querySelector('[name="duracion"]').value = data.duracion || '';
+    f.querySelector('[name="responsable"]').value = data.responsable || '';
+    f.querySelector('[name="temasTratados"]').value = data.temasTratados || '';
+    document.getElementById('asistentesContratista1').value = data.asistentesContratista1 || '';
+    document.getElementById('asistentesContratista2').value = data.asistentesContratista2 || '';
+    document.getElementById('totalAsistentes').value = data.totalAsistentes || '';
+    f.querySelector('[name="observaciones"]').value = data.observaciones || '';
+
+    // Checkboxes
+    f.querySelector('[name="evaluacionRealizada"]').checked = !!data.evaluacionRealizada;
+    f.querySelector('[name="demostraronComprension"]').checked = !!data.demostraronComprension;
+    f.querySelector('[name="materialDidactico"]').checked = !!data.materialDidactico;
+    f.querySelector('[name="certificadosEmitidos"]').checked = !!data.certificadosEmitidos;
+
+    // Banner de edición
+    let banner = document.getElementById('banner-editar-induccion');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'banner-editar-induccion';
+        banner.style.cssText = 'background:#fef08a;border:2px solid #eab308;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-weight:600;color:#854d0e;display:flex;justify-content:space-between;align-items:center;';
+        f.insertAdjacentElement('beforebegin', banner);
+    }
+    banner.innerHTML = `✏️ Editando registro de inducción — ${data.mes} <button onclick="cancelarEdicionInduccion()" style="background:#ef4444;color:white;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;">✕ Cancelar</button>`;
+    banner.style.display = 'flex';
+
+    // Cambiar texto del botón
+    f.querySelector('button[type="submit"]').innerHTML = '💾 Actualizar Registro';
+
+    // Scroll al formulario
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelarEdicionInduccion() {
+    editandoInduccionId = null;
+    document.getElementById('formInduccion').reset();
+    document.getElementById('totalAsistentes').value = '';
+    const banner = document.getElementById('banner-editar-induccion');
+    if (banner) banner.style.display = 'none';
+    document.querySelector('#formInduccion button[type="submit"]').innerHTML = '💾 Guardar Registro';
+}
+
+function calcularTotalAsistentes() {
+    const Contratista 1 = parseInt(document.getElementById('asistentesContratista1').value) || 0;
+    const Contratista 2 = parseInt(document.getElementById('asistentesContratista2').value) || 0;
+    document.getElementById('totalAsistentes').value = Contratista 1 + Contratista 2;
+}
+
+function limpiarFormulario(formId) {
+    if (confirm('¿Deseas limpiar el formulario? Se perderán los datos no guardados.')) {
+        document.getElementById(formId).reset();
+        document.getElementById('totalAsistentes').value = '';
+        document.getElementById('filesInduccion').innerHTML = '';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR INDUCCIÓN EN FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+document.getElementById('formInduccion').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Guardando en Firebase...';
+    
+    try {
+        // 1. CAPTURAR TODOS LOS DATOS DEL FORMULARIO
+        const formData = new FormData(e.target);
+        
+        const datos = {
+            // Información General
+            mes: formData.get('mes'),
+            fecha: formData.get('fecha'),
+            tipo: formData.get('tipo'),
+            
+            // Detalles
+            tema: formData.get('tema'),
+            duracion: parseFloat(formData.get('duracion')),
+            responsable: formData.get('responsable'),
+            temasTratados: formData.get('temasTratados'),
+            
+            // Asistentes
+            asistentesContratista1: parseInt(formData.get('asistentesContratista1')),
+            asistentesContratista2: parseInt(formData.get('asistentesContratista2')),
+            totalAsistentes: parseInt(formData.get('totalAsistentes')),
+            
+            // Evaluación (checkboxes)
+            evaluacionRealizada: formData.get('evaluacionRealizada') === 'true',
+            demostraronComprension: formData.get('demostraronComprension') === 'true',
+            materialDidactico: formData.get('materialDidactico') === 'true',
+            certificadosEmitidos: formData.get('certificadosEmitidos') === 'true',
+            
+            // Observaciones
+            observaciones: formData.get('observaciones') || '',
+            
+            // Metadata
+            timestamp: Date.now(),
+            fechaCreacion: new Date().toISOString(),
+            estado: 'Completado',
+            edificio: 'Torres de Anim II'
+        };
+        
+        // 2. ID: usar existente si editando, o nuevo
+        const induccionId = editandoInduccionId || ('induccion-' + Date.now());
+
+        // 3. SUBIR ARCHIVOS Y GUARDAR EN FIREBASE
+        if (archivosSeleccionados.induccion.length) btn.innerHTML = '⬆️ Subiendo archivos...';
+        datos.archivos = await uploadFilesAlStorage('induccion', induccionId);
+        btn.innerHTML = '⏳ Guardando en Firebase...';
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/inducciones/${induccionId}`);
+        await ref.set(datos);
+        
+        // 4. CONFIRMACIÓN
+        alert(`✅ INDUCCIÓN GUARDADA EXITOSAMENTE
+        
+📋 ID: ${induccionId}
+📅 Fecha: ${datos.fecha}
+📚 Tema: ${datos.tema}
+👥 Asistentes: ${datos.totalAsistentes}
+🕐 Duración: ${datos.duracion}h
+
+Los datos se guardaron en:
+Firebase → edificios/anim2/inducciones/`);
+        
+        // 5. LIMPIAR FORMULARIO Y ESTADO DE EDICIÓN
+        editandoInduccionId = null;
+        const bannerInd = document.getElementById('banner-editar-induccion');
+        if (bannerInd) bannerInd.style.display = 'none';
+        e.target.reset();
+        document.getElementById('totalAsistentes').value = '';
+        limpiarArchivos('induccion', 'filesInduccion');
+        btn.innerHTML = '💾 Guardar Registro';
+
+        // 6. RECARGAR TABLA DE REGISTROS
+        cargarRegistrosInducciones();
+        
+    } catch (error) {
+        console.error('Error al guardar:', error);
+        alert('❌ ERROR al guardar en Firebase:\n' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR REGISTROS DESDE FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarRegistrosInducciones() {
+    const tbody = document.getElementById('induccionRecords');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">⏳ Cargando registros...</td></tr>';
+
+    try {
+        const snapshot = await database.ref(`edificios/${EDIFICIO_ID}/inducciones`).once('value');
+        const registros = snapshot.val();
+
+        if (!registros) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No hay registros aún. Completa el primer formulario para comenzar.</td></tr>';
+            document.getElementById('induccion-progress').textContent = '0/12 meses completados';
+            return;
+        }
+
+        let html = '';
+        const mesesConRegistro = new Set();
+
+        // Guardar referencia global para el editor
+        window._inducciones_cargadas = registros;
+
+        Object.entries(registros).forEach(([id, data]) => {
+            // Contar meses únicos usando el campo "mes" (ej: "Enero 2026")
+            if (data.mes) mesesConRegistro.add(data.mes);
+
+            html += `
+                <tr>
+                    <td>${data.mes || '—'}</td>
+                    <td>${data.fecha || '—'}</td>
+                    <td>${data.tema || '—'}</td>
+                    <td>${data.totalAsistentes || '—'}</td>
+                    <td><span class="badge badge-success">${data.estado || 'Completado'}</span></td>
+                    <td>
+                        <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
+                        <button class="btn-icon" onclick="editarInduccion('${id}', window._inducciones_cargadas['${id}'])" title="Editar">✏️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+
+        // Actualizar contador de progreso
+        const completados = mesesConRegistro.size;
+        const progreso = Math.round((completados / 12) * 100);
+        document.getElementById('induccion-progress').textContent = `${completados}/12 meses completados`;
+        const barraInd = document.getElementById('induccion-bar');
+        if (barraInd) barraInd.style.width = progreso + '%';
+
+    } catch (error) {
+        console.error('Error al cargar registros:', error);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">❌ Error al cargar registros</td></tr>';
+    }
+}
+
+// Cargar registros al iniciar
+window.addEventListener('DOMContentLoaded', cargarRegistrosInducciones);
+</script>
+
+
+                <!-- Tabla de registros -->
+                <div class="form-container" style="margin-top: 30px;">
+                    <h3 class="section-title">📋 Registros de Inducción 2026</h3>
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Mes</th>
+                                <th>Fecha</th>
+                                <th>Tema</th>
+                                <th>Asistentes</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="induccionRecords">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM 2: INSPECCIONES -->
+        <div id="form-inspecciones" class="tab-content">
+            <div class="progress-info">
+                <div class="progress-stat">
+                    <strong>Progreso Mensual 2026</strong>
+                    <span id="inspeccion-progress">0/12 meses completados</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="inspeccion-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <h2 class="form-title">Registro de Inspecciones de Seguridad</h2>
+                
+                <div class="alert alert-info">
+                    <strong>📋 Frecuencia:</strong> Mensual (locativa) + Trimestral (equipos) | <strong>📅 Próximo registro:</strong> Enero 2026
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+     FORMULARIO 2/7: INSPECCIONES - CORREGIDO
+     ✅ Todos los campos tienen "name"
+     ✅ 18 checkboxes con name
+     ✅ JavaScript captura TODO
+     ✅ Guarda en Firebase: edificios/anim2/inspecciones/
+     ═══════════════════════════════════════════════════════════════ -->
+
+<form id="formInspecciones">
+    <div class="form-section">
+        <h3 class="section-title">Información General</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Tipo de Inspección <span class="required">*</span></label>
+                <select name="tipoInspeccion" class="form-select" required onchange="updateInspectionType(this.value)">
+                    <option value="">Seleccionar...</option>
+                    <option value="mensual">Inspección Mensual Locativa</option>
+                    <option value="trimestral">Inspección Trimestral Equipos Incendio</option>
+                    <option value="especial">Inspección Especial</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mes/Período <span class="required">*</span></label>
+                <select name="periodo" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Enero 2026">Enero 2026</option>
+                    <option value="Febrero 2026">Febrero 2026</option>
+                    <option value="Marzo 2026">Marzo 2026</option>
+                    <option value="Abril 2026">Abril 2026</option>
+                    <option value="Mayo 2026">Mayo 2026</option>
+                    <option value="Junio 2026">Junio 2026</option>
+                    <option value="Q1 2026 (Ene-Mar)">Q1 2026 (Ene-Mar)</option>
+                    <option value="Q2 2026 (Abr-Jun)">Q2 2026 (Abr-Jun)</option>
+                    <option value="Q3 2026 (Jul-Sep)">Q3 2026 (Jul-Sep)</option>
+                    <option value="Q4 2026 (Oct-Dic)">Q4 2026 (Oct-Dic)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha de Inspección <span class="required">*</span></label>
+                <input type="date" name="fecha" class="form-input" required>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKLIST LOCATIVA -->
+    <div class="form-section" id="inspeccion-locativa">
+        <h3 class="section-title">Checklist Inspección Locativa</h3>
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_escaleras" id="loc1" value="true">
+                <label for="loc1">Escaleras en buen estado (peldaños, pasamanos)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_cintas" id="loc2" value="true">
+                <label for="loc2">Cintas antideslizantes en escaleras</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_iluminacion" id="loc3" value="true">
+                <label for="loc3">Iluminación zonas comunes funcional</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_lucesEmergencia" id="loc4" value="true">
+                <label for="loc4">Luces de emergencia operativas</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_senalizacion" id="loc5" value="true">
+                <label for="loc5">Señalización de evacuación visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_puertasElectricas" id="loc6" value="true">
+                <label for="loc6">Puertas eléctricas funcionando correctamente</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_pisos" id="loc7" value="true">
+                <label for="loc7">Pisos libres de obstáculos</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_rutasEvacuacion" id="loc8" value="true">
+                <label for="loc8">Rutas de evacuación despejadas</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_tanques" id="loc9" value="true">
+                <label for="loc9">Acceso a tanques seguro</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="loc_filtraciones" id="loc10" value="true">
+                <label for="loc10">Sin filtraciones o humedades visibles</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKLIST EQUIPOS INCENDIO -->
+    <div class="form-section" id="inspeccion-equipos" style="display: none;">
+        <h3 class="section-title">Checklist Equipos Contra Incendio</h3>
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_extintor1" id="eq1" value="true">
+                <label for="eq1">Extintor 1 - Vigente y presurizado</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_extintor2" id="eq2" value="true">
+                <label for="eq2">Extintor 2 - Vigente y presurizado</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_extintor3" id="eq3" value="true">
+                <label for="eq3">Extintor 3 - Vigente y presurizado</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_extintor4" id="eq4" value="true">
+                <label for="eq4">Extintor 4 - Vigente y presurizado</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_manguera" id="eq5" value="true">
+                <label for="eq5">Gabinete contra incendio - Manguera en buen estado</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_valvula" id="eq6" value="true">
+                <label for="eq6">Gabinete - Válvula operativa</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_senalizacion" id="eq7" value="true">
+                <label for="eq7">Señalización equipos visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="eq_acceso" id="eq8" value="true">
+                <label for="eq8">Acceso a equipos despejado</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Hallazgos</h3>
+        <div class="form-group">
+            <label class="form-label">Hallazgos Identificados</label>
+            <textarea name="hallazgos" class="form-textarea" placeholder="Describe los hallazgos o condiciones inseguras identificadas..." rows="4"></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Nivel de Riesgo</label>
+                <select name="nivelRiesgo" class="form-select">
+                    <option value="Sin hallazgos">Sin hallazgos</option>
+                    <option value="Bajo">Bajo</option>
+                    <option value="Medio">Medio</option>
+                    <option value="Alto">Alto</option>
+                    <option value="Crítico">Crítico</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Estado Actual</label>
+                <select name="estado" class="form-select">
+                    <option value="Todo OK">Todo OK</option>
+                    <option value="Corregido inmediatamente">Corregido inmediatamente</option>
+                    <option value="En seguimiento">En seguimiento</option>
+                    <option value="Plan de mejoramiento">Plan de mejoramiento</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Acciones Correctivas Propuestas</label>
+            <textarea name="accionesCorrectivas" class="form-textarea" placeholder="Acciones recomendadas para corregir los hallazgos..." rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Responsable de la Inspección</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Nombre <span class="required">*</span></label>
+                <input type="text" name="responsableNombre" class="form-input" value="Carla Castellano Madriz" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cargo <span class="required">*</span></label>
+                <input type="text" name="responsableCargo" class="form-input" value="Responsable SG-SST" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Evidencias Fotográficas</h3>
+        <div class="file-upload" onclick="document.getElementById('fileInspeccion').click()">
+            <p>📷 Click para adjuntar fotos</p>
+            <small>Fotos de hallazgos, condiciones revisadas, evidencias</small>
+            <input type="file" id="fileInspeccion" name="archivos" multiple accept="image/*,.pdf" onchange="handleFileChange('fileInspeccion','filesInspeccion','inspeccion')">
+        </div>
+        <div class="uploaded-files" id="filesInspeccion"></div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="limpiarFormulario('formInspecciones')">🔄 Limpiar</button>
+        <button type="submit" class="btn btn-primary">💾 Guardar Inspección</button>
+    </div>
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// FUNCIÓN PARA CAMBIAR TIPO DE INSPECCIÓN
+// ═══════════════════════════════════════════════════════════════
+
+function updateInspectionType(tipo) {
+    const locativa = document.getElementById('inspeccion-locativa');
+    const equipos = document.getElementById('inspeccion-equipos');
+    
+    if (tipo === 'mensual') {
+        locativa.style.display = 'block';
+        equipos.style.display = 'none';
+    } else if (tipo === 'trimestral') {
+        locativa.style.display = 'none';
+        equipos.style.display = 'block';
+    } else if (tipo === 'especial') {
+        locativa.style.display = 'block';
+        equipos.style.display = 'block';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR INSPECCIÓN EN FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+document.getElementById('formInspecciones').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Guardando en Firebase...';
+    
+    try {
+        const formData = new FormData(e.target);
+        
+        // Capturar datos básicos
+        const datos = {
+            tipoInspeccion: formData.get('tipoInspeccion'),
+            periodo: formData.get('periodo'),
+            fecha: formData.get('fecha'),
+            hallazgos: formData.get('hallazgos') || 'Sin hallazgos',
+            nivelRiesgo: formData.get('nivelRiesgo'),
+            estado: formData.get('estado'),
+            accionesCorrectivas: formData.get('accionesCorrectivas') || '',
+            responsableNombre: formData.get('responsableNombre'),
+            responsableCargo: formData.get('responsableCargo'),
+            
+            // Checklist Locativa (10 items)
+            checklist_locativa: {
+                escaleras: formData.get('loc_escaleras') === 'true',
+                cintas: formData.get('loc_cintas') === 'true',
+                iluminacion: formData.get('loc_iluminacion') === 'true',
+                lucesEmergencia: formData.get('loc_lucesEmergencia') === 'true',
+                senalizacion: formData.get('loc_senalizacion') === 'true',
+                puertasElectricas: formData.get('loc_puertasElectricas') === 'true',
+                pisos: formData.get('loc_pisos') === 'true',
+                rutasEvacuacion: formData.get('loc_rutasEvacuacion') === 'true',
+                tanques: formData.get('loc_tanques') === 'true',
+                filtraciones: formData.get('loc_filtraciones') === 'true'
+            },
+            
+            // Checklist Equipos (8 items)
+            checklist_equipos: {
+                extintor1: formData.get('eq_extintor1') === 'true',
+                extintor2: formData.get('eq_extintor2') === 'true',
+                extintor3: formData.get('eq_extintor3') === 'true',
+                extintor4: formData.get('eq_extintor4') === 'true',
+                manguera: formData.get('eq_manguera') === 'true',
+                valvula: formData.get('eq_valvula') === 'true',
+                senalizacion: formData.get('eq_senalizacion') === 'true',
+                acceso: formData.get('eq_acceso') === 'true'
+            },
+            
+            // Metadata
+            timestamp: Date.now(),
+            fechaCreacion: new Date().toISOString(),
+            edificio: 'Torres de Anim II'
+        };
+        
+        // Calcular cumplimiento del checklist
+        const checklistRelevante = datos.tipoInspeccion === 'trimestral' ? 
+            datos.checklist_equipos : datos.checklist_locativa;
+        
+        const totalItems = Object.keys(checklistRelevante).length;
+        const itemsOK = Object.values(checklistRelevante).filter(v => v === true).length;
+        datos.cumplimiento = Math.round((itemsOK / totalItems) * 100);
+        
+        // Generar ID
+        const inspeccionId = 'inspeccion-' + Date.now();
+        
+        // Subir archivos y guardar en Firebase
+        if (archivosSeleccionados.inspeccion.length) btn.innerHTML = '⬆️ Subiendo archivos...';
+        datos.archivos = await uploadFilesAlStorage('inspeccion', inspeccionId);
+        btn.innerHTML = '⏳ Guardando en Firebase...';
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/inspecciones/${inspeccionId}`);
+        await ref.set(datos);
+        
+        // Confirmación
+        alert(`✅ INSPECCIÓN GUARDADA EXITOSAMENTE
+
+📋 ID: ${inspeccionId}
+📅 Fecha: ${datos.fecha}
+🔍 Tipo: ${datos.tipoInspeccion}
+✔️ Cumplimiento: ${datos.cumplimiento}%
+⚠️ Riesgo: ${datos.nivelRiesgo}
+
+Los datos se guardaron en:
+Firebase → edificios/anim2/inspecciones/`);
+        
+        // Limpiar formulario
+        e.target.reset();
+        limpiarArchivos('inspeccion', 'filesInspeccion');
+        document.getElementById('inspeccion-locativa').style.display = 'none';
+        document.getElementById('inspeccion-equipos').style.display = 'none';
+        
+        // Recargar tabla
+        cargarRegistrosInspecciones();
+        
+    } catch (error) {
+        console.error('Error al guardar:', error);
+        alert('❌ ERROR al guardar:\n' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR REGISTROS
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarRegistrosInspecciones() {
+    const tbody = document.getElementById('inspeccionRecords');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">⏳ Cargando...</td></tr>';
+
+    try {
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/inspecciones`);
+        const snapshot = await ref.once('value');
+        const registros = snapshot.val();
+
+        if (!registros) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No hay registros aún</td></tr>';
+            document.getElementById('inspeccion-progress').textContent = '0/12 meses completados';
+            return;
+        }
+
+        let html = '';
+        const periodosConRegistro = new Set();
+
+        Object.entries(registros).forEach(([id, data]) => {
+            // Contar periodos únicos usando el campo "periodo" (ej: "Enero 2026")
+            if (data.periodo) periodosConRegistro.add(data.periodo);
+
+            html += `
+                <tr>
+                    <td>${data.periodo}</td>
+                    <td>${data.fecha}</td>
+                    <td>${data.tipoInspeccion}</td>
+                    <td>${data.cumplimiento}%</td>
+                    <td><span class="badge badge-${data.nivelRiesgo === 'Sin hallazgos' ? 'success' : 'warning'}">${data.nivelRiesgo}</span></td>
+                    <td>
+                        <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver">👁️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+
+        // Actualizar contador de progreso
+        const completados = periodosConRegistro.size;
+        const progreso = Math.round((completados / 12) * 100);
+        document.getElementById('inspeccion-progress').textContent = `${completados}/12 meses completados`;
+        const barraInsp = document.getElementById('inspeccion-bar');
+        if (barraInsp) barraInsp.style.width = progreso + '%';
+
+    } catch (error) {
+        console.error('Error:', error);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">❌ Error al cargar</td></tr>';
+    }
+}
+
+window.addEventListener('DOMContentLoaded', cargarRegistrosInspecciones);
+</script>
+
+
+                <!-- Tabla de registros -->
+                <div class="form-container" style="margin-top: 30px;">
+                    <h3 class="section-title">📋 Registros de Inspecciones 2026</h3>
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Período</th>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Cumplimiento</th>
+                                <th>Riesgo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inspeccionRecords">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM 3: MANTENIMIENTO -->
+        <div id="form-mantenimiento" class="tab-content">
+            <div class="form-container">
+                <h2 class="form-title">Registro de Mantenimientos</h2>
+                
+                <div class="alert alert-info">
+                    <strong>📋 Periodicidad:</strong> Según plan anual | <strong>⚡ Registro:</strong> Cada vez que se ejecute mantenimiento
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+     FORMULARIO 3/7: MANTENIMIENTO - CORREGIDO
+     ✅ Todos los campos tienen "name"
+     ✅ JavaScript captura TODO
+     ✅ Guarda en Firebase: edificios/anim2/mantenimientos/
+     ✅ Calcula costo total automáticamente
+     ═══════════════════════════════════════════════════════════════ -->
+
+<form id="formMantenimiento">
+    <div class="form-section">
+        <h3 class="section-title">Información del Mantenimiento</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Tipo de Mantenimiento <span class="required">*</span></label>
+                <select name="tipo" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Preventivo">Preventivo</option>
+                    <option value="Correctivo">Correctivo</option>
+                    <option value="Predictivo">Predictivo</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha de Ejecución <span class="required">*</span></label>
+                <input type="date" name="fecha" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Área/Sistema <span class="required">*</span></label>
+                <select name="area" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Extintor">Extintor</option>
+                    <option value="Luces de emergencia">Luces de emergencia</option>
+                    <option value="Escaleras">Escaleras</option>
+                    <option value="Puertas eléctricas">Puertas eléctricas</option>
+                    <option value="Iluminación">Iluminación</option>
+                    <option value="Tanques de agua">Tanques de agua</option>
+                    <option value="Sistema eléctrico">Sistema eléctrico</option>
+                    <option value="Señalización">Señalización</option>
+                    <option value="Gabinete contra incendio">Gabinete contra incendio</option>
+                    <option value="Botiquín">Botiquín</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Detalles</h3>
+        <div class="form-group">
+            <label class="form-label">Descripción del Trabajo Realizado <span class="required">*</span></label>
+            <textarea name="descripcion" class="form-textarea" placeholder="Describe el mantenimiento ejecutado (qué se hizo, qué se cambió, qué se reparó)..." required rows="4"></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Empresa/Responsable <span class="required">*</span></label>
+                <input type="text" name="responsable" class="form-input" placeholder="Nombre empresa o persona" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Costo (COP)</label>
+                <input type="number" name="costo" class="form-input" placeholder="0" min="0" step="1000">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Estado Final</label>
+                <select name="estado" class="form-select">
+                    <option value="Completado">Completado</option>
+                    <option value="En proceso">En proceso</option>
+                    <option value="Requiere seguimiento">Requiere seguimiento</option>
+                    <option value="Pendiente repuestos">Pendiente repuestos</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Observaciones</label>
+            <textarea name="observaciones" class="form-textarea" placeholder="Observaciones adicionales, recomendaciones, próximos mantenimientos..." rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Programación del Próximo Mantenimiento</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Fecha Próximo Mantenimiento</label>
+                <input type="date" name="proximoMantenimiento" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Frecuencia</label>
+                <select name="frecuencia" class="form-select">
+                    <option value="">No aplica</option>
+                    <option value="Mensual">Mensual</option>
+                    <option value="Trimestral">Trimestral</option>
+                    <option value="Semestral">Semestral</option>
+                    <option value="Anual">Anual</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Soportes</h3>
+        <div class="file-upload" onclick="document.getElementById('fileMantenimiento').click()">
+            <p>📎 Click para adjuntar archivos</p>
+            <small>Fotos antes/después, facturas, certificados, garantías</small>
+            <input type="file" id="fileMantenimiento" name="archivos" multiple accept="image/*,.pdf,.xlsx,.docx" onchange="handleFileChange('fileMantenimiento','filesMantenimiento','mantenimiento')">
+        </div>
+        <div class="uploaded-files" id="filesMantenimiento"></div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="limpiarFormulario('formMantenimiento')">🔄 Limpiar</button>
+        <button type="submit" class="btn btn-primary">💾 Guardar Registro</button>
+    </div>
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR MANTENIMIENTO EN FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+document.getElementById('formMantenimiento').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Guardando en Firebase...';
+    
+    try {
+        const formData = new FormData(e.target);
+        
+        const datos = {
+            // Información básica
+            tipo: formData.get('tipo'),
+            fecha: formData.get('fecha'),
+            area: formData.get('area'),
+            
+            // Detalles del trabajo
+            descripcion: formData.get('descripcion'),
+            responsable: formData.get('responsable'),
+            costo: parseInt(formData.get('costo')) || 0,
+            estado: formData.get('estado') || 'Completado',
+            observaciones: formData.get('observaciones') || '',
+            
+            // Programación
+            proximoMantenimiento: formData.get('proximoMantenimiento') || '',
+            frecuencia: formData.get('frecuencia') || '',
+            
+            // Metadata
+            timestamp: Date.now(),
+            fechaCreacion: new Date().toISOString(),
+            mes: obtenerMes(formData.get('fecha')),
+            año: new Date(formData.get('fecha')).getFullYear(),
+            edificio: 'Torres de Anim II'
+        };
+        
+        // Generar ID único
+        const mantenimientoId = 'mantenimiento-' + Date.now();
+        
+        // Subir archivos y guardar en Firebase
+        if (archivosSeleccionados.mantenimiento.length) btn.innerHTML = '⬆️ Subiendo archivos...';
+        datos.archivos = await uploadFilesAlStorage('mantenimiento', mantenimientoId);
+        btn.innerHTML = '⏳ Guardando en Firebase...';
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/mantenimientos/${mantenimientoId}`);
+        await ref.set(datos);
+        
+        // Confirmación con detalles
+        alert(`✅ MANTENIMIENTO GUARDADO EXITOSAMENTE
+
+📋 ID: ${mantenimientoId}
+📅 Fecha: ${datos.fecha}
+🔧 Tipo: ${datos.tipo}
+🏗️ Área: ${datos.area}
+💰 Costo: $${datos.costo.toLocaleString('es-CO')}
+✔️ Estado: ${datos.estado}
+${datos.proximoMantenimiento ? '\n📆 Próximo: ' + datos.proximoMantenimiento : ''}
+
+Los datos se guardaron en:
+Firebase → edificios/anim2/mantenimientos/`);
+        
+        // Limpiar formulario
+        e.target.reset();
+        limpiarArchivos('mantenimiento', 'filesMantenimiento');
+        
+        // Recargar tabla
+        cargarRegistrosMantenimientos();
+        
+    } catch (error) {
+        console.error('Error al guardar:', error);
+        alert('❌ ERROR al guardar:\n' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// FUNCIÓN AUXILIAR PARA OBTENER MES
+// ═══════════════════════════════════════════════════════════════
+
+function obtenerMes(fecha) {
+    if (!fecha) return '';
+    const meses = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const date = new Date(fecha);
+    return meses[date.getMonth()] + ' ' + date.getFullYear();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR REGISTROS DESDE FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarRegistrosMantenimientos() {
+    const tbody = document.getElementById('mantenimientoRecords');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">⏳ Cargando registros...</td></tr>';
+    
+    try {
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/mantenimientos`);
+        const snapshot = await ref.once('value');
+        const registros = snapshot.val();
+        
+        if (!registros) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #64748b;">No hay registros aún. Completa el primer formulario para comenzar.</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        let costoTotal = 0;
+        
+        Object.entries(registros).forEach(([id, data]) => {
+            costoTotal += data.costo || 0;
+            
+            html += `
+                <tr>
+                    <td>${data.fecha}</td>
+                    <td>${data.tipo}</td>
+                    <td>${data.area}</td>
+                    <td>${data.responsable}</td>
+                    <td>$${(data.costo || 0).toLocaleString('es-CO')}</td>
+                    <td><span class="badge badge-${data.estado === 'Completado' ? 'success' : 'warning'}">${data.estado}</span></td>
+                    <td>
+                        <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        // Agregar fila de totales
+        html += `
+            <tr style="background: #f1f5f9; font-weight: bold;">
+                <td colspan="4" style="text-align: right;">TOTAL INVERTIDO:</td>
+                <td>$${costoTotal.toLocaleString('es-CO')}</td>
+                <td colspan="2"></td>
+            </tr>
+        `;
+        
+        tbody.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error al cargar registros:', error);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: red;">❌ Error al cargar registros</td></tr>';
+    }
+}
+
+// Cargar registros al iniciar
+window.addEventListener('DOMContentLoaded', cargarRegistrosMantenimientos);
+</script>
+
+
+                <!-- Tabla de registros -->
+                <div class="form-container" style="margin-top: 30px;">
+                    <h3 class="section-title">📋 Registros de Mantenimientos 2026</h3>
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Área</th>
+                                <th>Responsable</th>
+                                <th>Costo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mantenimientoRecords">
+                            <tr><td colspan="7" style="text-align: center; padding: 20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM 4: CONTRATISTAS -->
+        <div id="form-contratistas" class="tab-content">
+            <div class="progress-info">
+                <div class="progress-stat">
+                    <strong>Verificaciones 2026</strong>
+                    <span id="contratista-progress">0/4 trimestres completados</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="contratista-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <h2 class="form-title">Seguimiento a Contratistas</h2>
+                
+                <div class="alert alert-info">
+                    <strong>📋 Frecuencia:</strong> Trimestral | <strong>🏢 Empresas:</strong> Contratista 1, Contratista 2 | <strong>📅 Próxima verificación:</strong> Q1 2026
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+     FORMULARIO 4/7: CONTRATISTAS - CORREGIDO
+     ✅ Todos los campos tienen "name"
+     ✅ 8 checkboxes de documentación con name
+     ✅ Calcula % cumplimiento automático
+     ✅ Guarda en Firebase: edificios/anim2/contratistas/
+     ═══════════════════════════════════════════════════════════════ -->
+
+<form id="formContratistas">
+    <div class="form-section">
+        <h3 class="section-title">Información del Contratista</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Empresa <span class="required">*</span></label>
+                <select name="empresa" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Contratista 1">Contratista 1</option>
+                    <option value="Contratista 2">Contratista 2</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Período <span class="required">*</span></label>
+                <select name="periodo" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Q1 2026 (Ene-Mar)">Q1 2026 (Ene-Mar)</option>
+                    <option value="Q2 2026 (Abr-Jun)">Q2 2026 (Abr-Jun)</option>
+                    <option value="Q3 2026 (Jul-Sep)">Q3 2026 (Jul-Sep)</option>
+                    <option value="Q4 2026 (Oct-Dic)">Q4 2026 (Oct-Dic)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha de Verificación <span class="required">*</span></label>
+                <input type="date" name="fechaVerificacion" class="form-input" required>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">NIT Empresa</label>
+                <input type="text" name="nit" class="form-input" placeholder="900.xxx.xxx-x">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Representante Legal</label>
+                <input type="text" name="representante" class="form-input" placeholder="Nombre completo">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Número de Trabajadores</label>
+                <input type="number" name="numeroTrabajadores" class="form-input" placeholder="0" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Checklist de Documentación SST</h3>
+        <p style="color: #64748b; margin-bottom: 15px; font-size: 0.95rem;">
+            Verifica que el contratista cumpla con TODOS los requisitos de Seguridad y Salud en el Trabajo
+        </p>
+        
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_arl" id="cont1" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont1">✅ Afiliación ARL vigente</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_eps" id="cont2" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont2">✅ Afiliación EPS vigente</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_pension" id="cont3" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont3">✅ Afiliación Pensión vigente</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_certificadoSGSST" id="cont4" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont4">✅ Certificado SG-SST de la empresa</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_induccion" id="cont5" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont5">✅ Inducción SST realizada</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_matrizRiesgos" id="cont6" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont6">✅ Matriz de riesgos del contratista</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_epp" id="cont7" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont7">✅ EPP entregados y registrados</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="doc_examenMedico" id="cont8" value="true" onchange="calcularCumplimientoContratista()">
+                <label for="cont8">✅ Examen médico ocupacional vigente</label>
+            </div>
+        </div>
+        
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: var(--primary);">% Cumplimiento Documental:</span>
+                <span id="cumplimientoDisplay" style="font-size: 1.5rem; font-weight: 700; color: var(--success);">0%</span>
+            </div>
+            <input type="hidden" name="cumplimiento" id="cumplimientoValue" value="0">
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label class="form-label">Observaciones de Cumplimiento</label>
+            <textarea name="observaciones" class="form-textarea" placeholder="Documentos faltantes, vencimientos próximos, observaciones..." rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Fechas de Vencimiento</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Vencimiento Afiliaciones</label>
+                <input type="date" name="vencimientoAfiliaciones" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vencimiento Certificado SST</label>
+                <input type="date" name="vencimientoCertificado" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vencimiento Examen Médico</label>
+                <input type="date" name="vencimientoExamen" class="form-input">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Documentos Digitales</h3>
+        <div class="file-upload" onclick="document.getElementById('fileContratistas').click()">
+            <p>📎 Click para adjuntar archivos</p>
+            <small>Afiliaciones, certificados, matriz de riesgos, exámenes médicos, EPP</small>
+            <input type="file" id="fileContratistas" name="archivos" multiple accept=".pdf,.jpg,.png,.xlsx" onchange="handleFileChange('fileContratistas','filesContratistas','contratistas')">
+        </div>
+        <div class="uploaded-files" id="filesContratistas"></div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="limpiarFormulario('formContratistas')">🔄 Limpiar</button>
+        <button type="submit" class="btn btn-primary">💾 Guardar Verificación</button>
+    </div>
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CALCULAR % CUMPLIMIENTO EN TIEMPO REAL
+// ═══════════════════════════════════════════════════════════════
+
+function calcularCumplimientoContratista() {
+    const checkboxes = document.querySelectorAll('#formContratistas input[type="checkbox"]');
+    const total = checkboxes.length;
+    const marcados = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const porcentaje = Math.round((marcados / total) * 100);
+    
+    document.getElementById('cumplimientoDisplay').textContent = porcentaje + '%';
+    document.getElementById('cumplimientoValue').value = porcentaje;
+    
+    // Cambiar color según cumplimiento
+    const display = document.getElementById('cumplimientoDisplay');
+    if (porcentaje === 100) {
+        display.style.color = '#10b981'; // Verde
+    } else if (porcentaje >= 75) {
+        display.style.color = '#f59e0b'; // Amarillo
+    } else {
+        display.style.color = '#ef4444'; // Rojo
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR CONTRATISTA EN FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+document.getElementById('formContratistas').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Guardando en Firebase...';
+    
+    try {
+        const formData = new FormData(e.target);
+        
+        const datos = {
+            // Información básica
+            empresa: formData.get('empresa'),
+            periodo: formData.get('periodo'),
+            fechaVerificacion: formData.get('fechaVerificacion'),
+            nit: formData.get('nit') || '',
+            representante: formData.get('representante') || '',
+            numeroTrabajadores: parseInt(formData.get('numeroTrabajadores')) || 0,
+            
+            // Documentación (8 items)
+            documentacion: {
+                arl: formData.get('doc_arl') === 'true',
+                eps: formData.get('doc_eps') === 'true',
+                pension: formData.get('doc_pension') === 'true',
+                certificadoSGSST: formData.get('doc_certificadoSGSST') === 'true',
+                induccion: formData.get('doc_induccion') === 'true',
+                matrizRiesgos: formData.get('doc_matrizRiesgos') === 'true',
+                epp: formData.get('doc_epp') === 'true',
+                examenMedico: formData.get('doc_examenMedico') === 'true'
+            },
+            
+            // Cumplimiento
+            cumplimiento: parseInt(formData.get('cumplimiento')),
+            observaciones: formData.get('observaciones') || '',
+            
+            // Vencimientos
+            vencimientos: {
+                afiliaciones: formData.get('vencimientoAfiliaciones') || '',
+                certificado: formData.get('vencimientoCertificado') || '',
+                examen: formData.get('vencimientoExamen') || ''
+            },
+            
+            // Estado según cumplimiento
+            estado: parseInt(formData.get('cumplimiento')) === 100 ? 'Completo' : 
+                    parseInt(formData.get('cumplimiento')) >= 75 ? 'Parcial' : 'Incompleto',
+            
+            // Metadata
+            timestamp: Date.now(),
+            fechaCreacion: new Date().toISOString(),
+            edificio: 'Torres de Anim II'
+        };
+        
+        // Generar ID único
+        const contratistaId = 'contratista-' + Date.now();
+        
+        // Subir archivos y guardar en Firebase
+        if (archivosSeleccionados.contratistas.length) btn.innerHTML = '⬆️ Subiendo archivos...';
+        datos.archivos = await uploadFilesAlStorage('contratistas', contratistaId);
+        btn.innerHTML = '⏳ Guardando en Firebase...';
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/contratistas/${contratistaId}`);
+        await ref.set(datos);
+        
+        // Confirmación
+        const emoji = datos.cumplimiento === 100 ? '🎉' : datos.cumplimiento >= 75 ? '⚠️' : '❌';
+        
+        alert(`${emoji} VERIFICACIÓN GUARDADA EXITOSAMENTE
+
+📋 ID: ${contratistaId}
+🏢 Empresa: ${datos.empresa}
+📅 Período: ${datos.periodo}
+📊 Cumplimiento: ${datos.cumplimiento}%
+✔️ Estado: ${datos.estado}
+👷 Trabajadores: ${datos.numeroTrabajadores}
+
+${datos.cumplimiento === 100 ? '✅ Documentación COMPLETA' : 
+  '⚠️ Documentación INCOMPLETA - Revisar observaciones'}
+
+Los datos se guardaron en:
+Firebase → edificios/anim2/contratistas/`);
+        
+        // Limpiar formulario
+        e.target.reset();
+        document.getElementById('cumplimientoDisplay').textContent = '0%';
+        document.getElementById('cumplimientoValue').value = '0';
+        limpiarArchivos('contratistas', 'filesContratistas');
+        
+        // Recargar tabla
+        cargarRegistrosContratistas();
+        
+    } catch (error) {
+        console.error('Error al guardar:', error);
+        alert('❌ ERROR al guardar:\n' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR REGISTROS DESDE FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarRegistrosContratistas() {
+    const tbody = document.getElementById('contratistasRecords');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">⏳ Cargando registros...</td></tr>';
+    
+    try {
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/contratistas`);
+        const snapshot = await ref.once('value');
+        const registros = snapshot.val();
+        
+        if (!registros) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No hay registros aún. Completa el primer formulario para comenzar.</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        Object.entries(registros).forEach(([id, data]) => {
+            const badgeClass = data.cumplimiento === 100 ? 'success' : 
+                              data.cumplimiento >= 75 ? 'warning' : 'danger';
+            
+            html += `
+                <tr>
+                    <td>${data.empresa}</td>
+                    <td>${data.periodo}</td>
+                    <td>${data.fechaVerificacion}</td>
+                    <td>${data.numeroTrabajadores}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                                <div style="width: ${data.cumplimiento}%; height: 100%; background: ${data.cumplimiento === 100 ? '#10b981' : data.cumplimiento >= 75 ? '#f59e0b' : '#ef4444'};"></div>
+                            </div>
+                            <span style="font-weight: 600; color: ${data.cumplimiento === 100 ? '#10b981' : data.cumplimiento >= 75 ? '#f59e0b' : '#ef4444'};">${data.cumplimiento}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error al cargar registros:', error);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">❌ Error al cargar registros</td></tr>';
+    }
+}
+
+// Cargar registros al iniciar
+window.addEventListener('DOMContentLoaded', cargarRegistrosContratistas);
+</script>
+
+
+                <!-- Tabla de registros -->
+                <div class="form-container" style="margin-top: 30px;">
+                    <h3 class="section-title">📋 Verificaciones de Contratistas 2026</h3>
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Período</th>
+                                <th>Fecha</th>
+                                <th>Trabajadores</th>
+                                <th>Cumplimiento</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contratistasRecords">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM 5: ACCIDENTES -->
+        <div id="form-accidentes" class="tab-content">
+            <div class="form-container">
+                <h2 class="form-title">Investigación de Accidentes/Incidentes</h2>
+                
+                <div class="alert alert-warning">
+                    <strong>⚠️ Importante:</strong> Reportar accidentes de trabajo a la ARL dentro de las 48 horas siguientes al evento
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+     FORMULARIO 5/7: ACCIDENTES/INCIDENTES - CORREGIDO
+     ✅ Todos los campos tienen "name"
+     ✅ 3 checkboxes de reportes con name
+     ✅ Importante para cumplimiento legal
+     ✅ Guarda en Firebase: edificios/anim2/accidentes/
+     ═══════════════════════════════════════════════════════════════ -->
+
+<form id="formAccidentes">
+    <div class="form-section">
+        <h3 class="section-title">Información del Evento</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Tipo <span class="required">*</span></label>
+                <select name="tipo" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Accidente de Trabajo">Accidente de Trabajo</option>
+                    <option value="Incidente">Incidente</option>
+                    <option value="Casi Accidente">Casi Accidente</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha del Evento <span class="required">*</span></label>
+                <input type="date" name="fecha" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hora del Evento</label>
+                <input type="time" name="hora" class="form-input">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Lugar del Evento <span class="required">*</span></label>
+                <input type="text" name="lugar" class="form-input" placeholder="Escaleras, lobby, garaje, etc." required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gravedad</label>
+                <select name="gravedad" class="form-select">
+                    <option value="Leve">Leve</option>
+                    <option value="Moderado">Moderado</option>
+                    <option value="Grave">Grave</option>
+                    <option value="Mortal">Mortal</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Días de Incapacidad</label>
+                <input type="number" name="diasIncapacidad" class="form-input" placeholder="0" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Persona(s) Afectada(s)</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Nombre Completo <span class="required">*</span></label>
+                <input type="text" name="nombreAfectado" class="form-input" placeholder="Nombres y apellidos completos" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Identificación <span class="required">*</span></label>
+                <input type="text" name="identificacion" class="form-input" placeholder="CC, CE, Pasaporte" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Empresa/Cargo</label>
+                <input type="text" name="empresaCargo" class="form-input" placeholder="Contratista 1, Contratista 2, Residente">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Edad</label>
+                <input type="number" name="edad" class="form-input" placeholder="Años" min="0" max="120">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Género</label>
+                <select name="genero" class="form-select">
+                    <option value="">Seleccionar...</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Teléfono de Contacto</label>
+                <input type="tel" name="telefono" class="form-input" placeholder="300 123 4567">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Descripción del Evento</h3>
+        <div class="form-group">
+            <label class="form-label">¿Qué pasó? <span class="required">*</span></label>
+            <textarea name="descripcion" class="form-textarea" placeholder="Describa detalladamente lo sucedido (qué estaba haciendo la persona, qué ocurrió, lesiones resultantes)..." required rows="4"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Parte del Cuerpo Afectada</label>
+            <input type="text" name="parteAfectada" class="form-input" placeholder="Mano derecha, tobillo izquierdo, cabeza, etc.">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Análisis de Causas</label>
+            <textarea name="analisisCausas" class="form-textarea" placeholder="Causas inmediatas (actos/condiciones inseguras), causas básicas (factores personales/de trabajo)..." rows="4"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Acciones Correctivas Inmediatas</label>
+            <textarea name="accionesInmediatas" class="form-textarea" placeholder="Acciones tomadas en el momento (primeros auxilios, atención médica, aislamiento del área, etc.)..." rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Plan de Acción Preventivo</label>
+            <textarea name="planPreventivo" class="form-textarea" placeholder="Acciones para prevenir recurrencia (capacitaciones, mejoras locativas, señalización, procedimientos, etc.)..." rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Reporte a Entidades</h3>
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" name="reportadoARL" id="acc1" value="true">
+                <label for="acc1">✅ Reportado a la ARL</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="furatDiligenciado" id="acc2" value="true">
+                <label for="acc2">✅ FURAT diligenciado</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="investigacionRealizada" id="acc3" value="true">
+                <label for="acc3">✅ Investigación realizada</label>
+            </div>
+        </div>
+        
+        <div class="form-row" style="margin-top: 15px;">
+            <div class="form-group">
+                <label class="form-label">Fecha de Reporte a ARL</label>
+                <input type="date" name="fechaReporteARL" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Número de FURAT</label>
+                <input type="text" name="numeroFURAT" class="form-input" placeholder="Número de radicado">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Seguimiento</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Estado del Caso</label>
+                <select name="estado" class="form-select">
+                    <option value="Abierto">Abierto - En investigación</option>
+                    <option value="En seguimiento">En seguimiento</option>
+                    <option value="Cerrado">Cerrado - Acciones completadas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Responsable del Seguimiento</label>
+                <input type="text" name="responsableSeguimiento" class="form-input" value="Carla Castellano Madriz">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Evidencias</h3>
+        <div class="file-upload" onclick="document.getElementById('fileAccidentes').click()">
+            <p>📎 Click para adjuntar archivos</p>
+            <small>Fotos del lugar, FURAT, reportes médicos, testimonios, formato de investigación</small>
+            <input type="file" id="fileAccidentes" name="archivos" multiple accept="image/*,.pdf,.docx" onchange="handleFileChange('fileAccidentes','filesAccidentes','accidentes')">
+        </div>
+        <div class="uploaded-files" id="filesAccidentes"></div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="limpiarFormulario('formAccidentes')">🔄 Limpiar</button>
+        <button type="submit" class="btn btn-danger">⚠️ Registrar Accidente/Incidente</button>
+    </div>
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR ACCIDENTE/INCIDENTE EN FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+document.getElementById('formAccidentes').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Confirmación adicional para accidentes
+    if (!confirm('⚠️ ¿Confirmas el registro de este accidente/incidente?\n\nRecuerda que es obligatorio reportar a la ARL dentro de las primeras 48 horas.')) {
+        return;
+    }
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Guardando en Firebase...';
+    
+    try {
+        const formData = new FormData(e.target);
+        
+        const datos = {
+            // Información del evento
+            tipo: formData.get('tipo'),
+            fecha: formData.get('fecha'),
+            hora: formData.get('hora') || '',
+            lugar: formData.get('lugar'),
+            gravedad: formData.get('gravedad'),
+            diasIncapacidad: parseInt(formData.get('diasIncapacidad')) || 0,
+            
+            // Persona afectada
+            nombreAfectado: formData.get('nombreAfectado'),
+            identificacion: formData.get('identificacion'),
+            empresaCargo: formData.get('empresaCargo') || '',
+            edad: parseInt(formData.get('edad')) || 0,
+            genero: formData.get('genero') || '',
+            telefono: formData.get('telefono') || '',
+            
+            // Descripción
+            descripcion: formData.get('descripcion'),
+            parteAfectada: formData.get('parteAfectada') || '',
+            analisisCausas: formData.get('analisisCausas') || '',
+            accionesInmediatas: formData.get('accionesInmediatas') || '',
+            planPreventivo: formData.get('planPreventivo') || '',
+            
+            // Reportes
+            reportes: {
+                reportadoARL: formData.get('reportadoARL') === 'true',
+                furatDiligenciado: formData.get('furatDiligenciado') === 'true',
+                investigacionRealizada: formData.get('investigacionRealizada') === 'true',
+                fechaReporteARL: formData.get('fechaReporteARL') || '',
+                numeroFURAT: formData.get('numeroFURAT') || ''
+            },
+            
+            // Seguimiento
+            estado: formData.get('estado'),
+            responsableSeguimiento: formData.get('responsableSeguimiento'),
+            
+            // Metadata
+            timestamp: Date.now(),
+            fechaCreacion: new Date().toISOString(),
+            mes: obtenerMes(formData.get('fecha')),
+            año: new Date(formData.get('fecha')).getFullYear(),
+            edificio: 'Torres de Anim II',
+            
+            // Indicadores
+            esAccidenteTrabajo: formData.get('tipo') === 'Accidente de Trabajo',
+            requiereReporteARL: formData.get('tipo') === 'Accidente de Trabajo'
+        };
+        
+        // Generar ID único
+        const accidenteId = 'accidente-' + Date.now();
+        
+        // Subir archivos y guardar en Firebase
+        if (archivosSeleccionados.accidentes.length) btn.innerHTML = '⬆️ Subiendo archivos...';
+        datos.archivos = await uploadFilesAlStorage('accidentes', accidenteId);
+        btn.innerHTML = '⏳ Guardando en Firebase...';
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/accidentes/${accidenteId}`);
+        await ref.set(datos);
+        
+        // Confirmación según gravedad
+        let alertIcon = '⚠️';
+        if (datos.tipo === 'Accidente de Trabajo') alertIcon = '🚨';
+        if (datos.gravedad === 'Grave' || datos.gravedad === 'Mortal') alertIcon = '🆘';
+        
+        alert(`${alertIcon} REGISTRO GUARDADO EXITOSAMENTE
+
+📋 ID: ${accidenteId}
+📅 Fecha: ${datos.fecha} ${datos.hora}
+📍 Lugar: ${datos.lugar}
+👤 Afectado: ${datos.nombreAfectado}
+⚠️ Tipo: ${datos.tipo}
+📊 Gravedad: ${datos.gravedad}
+${datos.diasIncapacidad > 0 ? '🏥 Incapacidad: ' + datos.diasIncapacidad + ' días\n' : ''}
+${datos.reportes.reportadoARL ? '✅ Reportado a ARL\n' : '❌ PENDIENTE: Reportar a ARL\n'}
+${datos.reportes.furatDiligenciado ? '✅ FURAT diligenciado\n' : ''}
+
+${!datos.reportes.reportadoARL && datos.tipo === 'Accidente de Trabajo' ? 
+'⚠️ RECORDATORIO: Tienes 48 horas para reportar a la ARL\n' : ''}
+
+Los datos se guardaron en:
+Firebase → edificios/anim2/accidentes/`);
+        
+        // Limpiar formulario
+        e.target.reset();
+        limpiarArchivos('accidentes', 'filesAccidentes');
+        
+        // Recargar tabla
+        cargarRegistrosAccidentes();
+        
+    } catch (error) {
+        console.error('Error al guardar:', error);
+        alert('❌ ERROR al guardar:\n' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// FUNCIÓN AUXILIAR
+// ═══════════════════════════════════════════════════════════════
+
+function obtenerMes(fecha) {
+    if (!fecha) return '';
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const date = new Date(fecha);
+    return meses[date.getMonth()] + ' ' + date.getFullYear();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR REGISTROS DESDE FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarRegistrosAccidentes() {
+    const tbody = document.getElementById('accidentesRecords');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">⏳ Cargando registros...</td></tr>';
+    
+    try {
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/accidentes`);
+        const snapshot = await ref.once('value');
+        const registros = snapshot.val();
+        
+        if (!registros) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #64748b;">✅ No hay accidentes registrados (¡Esto es bueno!)</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        Object.entries(registros).forEach(([id, data]) => {
+            const gravedadColor = data.gravedad === 'Leve' ? '#10b981' : 
+                                 data.gravedad === 'Moderado' ? '#f59e0b' : '#ef4444';
+            
+            html += `
+                <tr>
+                    <td>${data.fecha}</td>
+                    <td><span class="badge" style="background: ${data.tipo === 'Accidente de Trabajo' ? '#ef4444' : '#f59e0b'};">${data.tipo}</span></td>
+                    <td>${data.nombreAfectado}</td>
+                    <td>${data.lugar}</td>
+                    <td><span style="color: ${gravedadColor}; font-weight: 600;">${data.gravedad}</span></td>
+                    <td>${data.reportes.reportadoARL ? '✅' : '❌'} ARL<br>${data.reportes.furatDiligenciado ? '✅' : '❌'} FURAT</td>
+                    <td>
+                        <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver">👁️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error al cargar registros:', error);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: red;">❌ Error al cargar registros</td></tr>';
+    }
+}
+
+// Cargar registros al iniciar
+window.addEventListener('DOMContentLoaded', cargarRegistrosAccidentes);
+</script>
+
+
+                <!-- Tabla de registros -->
+                <div class="form-container" style="margin-top: 30px;">
+                    <h3 class="section-title">📋 Registro de Accidentes/Incidentes 2026</h3>
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Afectado</th>
+                                <th>Lugar</th>
+                                <th>Gravedad</th>
+                                <th>Reportes</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accidentesRecords">
+                            <tr><td colspan="7" style="text-align: center; padding: 20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM 6: SIMULACROS -->
+        <div id="form-simulacros" class="tab-content">
+            <div class="progress-info">
+                <div class="progress-stat">
+                    <strong>Simulacros 2026</strong>
+                    <span id="simulacro-progress">0/2 simulacros completados</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="simulacro-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <h2 class="form-title">Registro de Simulacros</h2>
+                
+                <div class="alert alert-info">
+                    <strong>📋 Frecuencia:</strong> Mínimo 2 simulacros anuales | <strong>📅 Próximo simulacro:</strong> Febrero 2026
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+     FORMULARIO 6/7: SIMULACROS - CORREGIDO
+     ✅ Todos los campos tienen "name"
+     ✅ 4 checkboxes de brigada con name
+     ✅ Calcula calificación automáticamente
+     ✅ Guarda en Firebase: edificios/anim2/simulacros/
+     ═══════════════════════════════════════════════════════════════ -->
+
+<form id="formSimulacros">
+    <div class="form-section">
+        <h3 class="section-title">Información del Simulacro</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Tipo de Simulacro <span class="required">*</span></label>
+                <select name="tipo" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Evacuación">Evacuación</option>
+                    <option value="Incendio">Incendio</option>
+                    <option value="Sismo">Sismo</option>
+                    <option value="Simulacro Distrital">Simulacro Distrital</option>
+                    <option value="Primeros Auxilios">Primeros Auxilios</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha del Simulacro <span class="required">*</span></label>
+                <input type="date" name="fecha" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hora de Inicio</label>
+                <input type="time" name="horaInicio" class="form-input">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Número de Participantes <span class="required">*</span></label>
+                <input type="number" name="numeroParticipantes" class="form-input" placeholder="0" min="0" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tiempo de Evacuación</label>
+                <input type="text" name="tiempoEvacuacion" class="form-input" placeholder="Ej: 3 minutos 45 segundos">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Responsable del Simulacro</label>
+                <input type="text" name="responsable" class="form-input" value="Carla Castellano Madriz">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Desarrollo del Simulacro</h3>
+        <div class="form-group">
+            <label class="form-label">Descripción del Escenario <span class="required">*</span></label>
+            <textarea name="escenario" class="form-textarea" placeholder="Describa el escenario planteado (tipo de emergencia simulada, ubicación, condiciones)..." required rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Desarrollo y Comportamiento</label>
+            <textarea name="desarrollo" class="form-textarea" placeholder="Cómo respondieron los participantes, qué acciones se tomaron, flujo de la evacuación..." rows="4"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Punto de Encuentro Utilizado</label>
+                <input type="text" name="puntoEncuentro" class="form-input" placeholder="Ubicación del punto de encuentro">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Alarma Utilizada</label>
+                <select name="alarmaUtilizada" class="form-select">
+                    <option value="Sí">Sí - Funcionó correctamente</option>
+                    <option value="Sí - Con fallas">Sí - Con fallas</option>
+                    <option value="No">No se utilizó alarma</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Evaluación del Simulacro</h3>
+        
+        <div class="form-group">
+            <label class="form-label">Calificación General</label>
+            <select name="calificacion" class="form-select">
+                <option value="Excelente">Excelente</option>
+                <option value="Bueno">Bueno</option>
+                <option value="Regular">Regular</option>
+                <option value="Deficiente">Deficiente</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Aspectos Positivos</label>
+            <textarea name="aspectosPositivos" class="form-textarea" placeholder="Qué funcionó bien (ej: respuesta rápida, uso correcto de rutas, organización de brigada)..." rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Oportunidades de Mejora</label>
+            <textarea name="oportunidadesMejora" class="form-textarea" placeholder="Qué se debe mejorar (ej: demoras en evacuación, desconocimiento de rutas, falta de entrenamiento)..." rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Plan de Mejoramiento</label>
+            <textarea name="planMejoramiento" class="form-textarea" placeholder="Acciones correctivas a implementar (capacitaciones, ajustes en señalización, mejoras en brigada)..." rows="3"></textarea>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Brigada de Emergencias</h3>
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" name="brigadaConformada" id="sim1" value="true">
+                <label for="sim1">✅ Brigada conformada y presente</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="rolesDefinidos" id="sim2" value="true">
+                <label for="sim2">✅ Roles claramente definidos</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="equiposUtilizados" id="sim3" value="true">
+                <label for="sim3">✅ Equipos de emergencia utilizados</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" name="puntoIdentificado" id="sim4" value="true">
+                <label for="sim4">✅ Punto de encuentro identificado</label>
+            </div>
+        </div>
+        
+        <div class="form-row" style="margin-top: 15px;">
+            <div class="form-group">
+                <label class="form-label">Número de Brigadistas</label>
+                <input type="number" name="numeroBrigadistas" class="form-input" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Líder de Brigada</label>
+                <input type="text" name="liderBrigada" class="form-input" placeholder="Nombre del líder">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Observaciones Adicionales</h3>
+        <div class="form-group">
+            <label class="form-label">Observaciones Generales</label>
+            <textarea name="observaciones" class="form-textarea" placeholder="Cualquier otra observación relevante sobre el simulacro..." rows="3"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Próximo Simulacro Programado</label>
+                <input type="date" name="proximoSimulacro" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Requiere Capacitación Adicional</label>
+                <select name="requiereCapacitacion" class="form-select">
+                    <option value="No">No</option>
+                    <option value="Sí">Sí</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-title">Evidencias</h3>
+        <div class="file-upload" onclick="document.getElementById('fileSimulacros').click()">
+            <p>📷 Click para adjuntar archivos</p>
+            <small>Fotos, videos, actas, listas de asistencia, formato de evaluación</small>
+            <input type="file" id="fileSimulacros" name="archivos" multiple accept="image/*,video/*,.pdf,.xlsx,.docx" onchange="handleFileChange('fileSimulacros','filesSimulacros','simulacros')">
+        </div>
+        <div class="uploaded-files" id="filesSimulacros"></div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="limpiarFormulario('formSimulacros')">🔄 Limpiar</button>
+        <button type="submit" class="btn btn-primary">💾 Guardar Simulacro</button>
+    </div>
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GUARDAR SIMULACRO EN FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+document.getElementById('formSimulacros').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Guardando en Firebase...';
+    
+    try {
+        const formData = new FormData(e.target);
+        
+        const datos = {
+            // Información básica
+            tipo: formData.get('tipo'),
+            fecha: formData.get('fecha'),
+            horaInicio: formData.get('horaInicio') || '',
+            numeroParticipantes: parseInt(formData.get('numeroParticipantes')),
+            tiempoEvacuacion: formData.get('tiempoEvacuacion') || '',
+            responsable: formData.get('responsable'),
+            
+            // Desarrollo
+            escenario: formData.get('escenario'),
+            desarrollo: formData.get('desarrollo') || '',
+            puntoEncuentro: formData.get('puntoEncuentro') || '',
+            alarmaUtilizada: formData.get('alarmaUtilizada'),
+            
+            // Evaluación
+            calificacion: formData.get('calificacion'),
+            aspectosPositivos: formData.get('aspectosPositivos') || '',
+            oportunidadesMejora: formData.get('oportunidadesMejora') || '',
+            planMejoramiento: formData.get('planMejoramiento') || '',
+            
+            // Brigada (4 items)
+            brigada: {
+                conformada: formData.get('brigadaConformada') === 'true',
+                rolesDefinidos: formData.get('rolesDefinidos') === 'true',
+                equiposUtilizados: formData.get('equiposUtilizados') === 'true',
+                puntoIdentificado: formData.get('puntoIdentificado') === 'true'
+            },
+            
+            numeroBrigadistas: parseInt(formData.get('numeroBrigadistas')) || 0,
+            liderBrigada: formData.get('liderBrigada') || '',
+            
+            // Observaciones
+            observaciones: formData.get('observaciones') || '',
+            proximoSimulacro: formData.get('proximoSimulacro') || '',
+            requiereCapacitacion: formData.get('requiereCapacitacion'),
+            
+            // Metadata
+            timestamp: Date.now(),
+            fechaCreacion: new Date().toISOString(),
+            mes: obtenerMes(formData.get('fecha')),
+            año: new Date(formData.get('fecha')).getFullYear(),
+            edificio: 'Torres de Anim II'
+        };
+        
+        // Calcular puntaje de brigada
+        const checklistBrigada = datos.brigada;
+        const totalItems = Object.keys(checklistBrigada).length;
+        const itemsOK = Object.values(checklistBrigada).filter(v => v === true).length;
+        datos.puntajeBrigada = Math.round((itemsOK / totalItems) * 100);
+        
+        // Generar ID único
+        const simulacroId = 'simulacro-' + Date.now();
+        
+        // Subir archivos y guardar en Firebase
+        if (archivosSeleccionados.simulacros.length) btn.innerHTML = '⬆️ Subiendo archivos...';
+        datos.archivos = await uploadFilesAlStorage('simulacros', simulacroId);
+        btn.innerHTML = '⏳ Guardando en Firebase...';
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/simulacros/${simulacroId}`);
+        await ref.set(datos);
+        
+        // Confirmación según calificación
+        const emoji = datos.calificacion === 'Excelente' ? '🎉' : 
+                     datos.calificacion === 'Bueno' ? '✅' : 
+                     datos.calificacion === 'Regular' ? '⚠️' : '❌';
+        
+        alert(`${emoji} SIMULACRO GUARDADO EXITOSAMENTE
+
+📋 ID: ${simulacroId}
+📅 Fecha: ${datos.fecha}
+🚨 Tipo: ${datos.tipo}
+👥 Participantes: ${datos.numeroParticipantes}
+⏱️ Tiempo: ${datos.tiempoEvacuacion || 'No registrado'}
+⭐ Calificación: ${datos.calificacion}
+👷 Brigada: ${datos.puntajeBrigada}% preparada
+
+${datos.requiereCapacitacion === 'Sí' ? '📚 Requiere capacitación adicional\n' : ''}
+${datos.proximoSimulacro ? '📆 Próximo simulacro: ' + datos.proximoSimulacro : ''}
+
+Los datos se guardaron en:
+Firebase → edificios/anim2/simulacros/`);
+        
+        // Limpiar formulario
+        e.target.reset();
+        limpiarArchivos('simulacros', 'filesSimulacros');
+        
+        // Recargar tabla
+        cargarRegistrosSimulacros();
+        
+    } catch (error) {
+        console.error('Error al guardar:', error);
+        alert('❌ ERROR al guardar:\n' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// FUNCIÓN AUXILIAR
+// ═══════════════════════════════════════════════════════════════
+
+function obtenerMes(fecha) {
+    if (!fecha) return '';
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const date = new Date(fecha);
+    return meses[date.getMonth()] + ' ' + date.getFullYear();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARGAR REGISTROS DESDE FIREBASE
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarRegistrosSimulacros() {
+    const tbody = document.getElementById('simulacrosRecords');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">⏳ Cargando registros...</td></tr>';
+    
+    try {
+        const ref = database.ref(`edificios/${EDIFICIO_ID}/simulacros`);
+        const snapshot = await ref.once('value');
+        const registros = snapshot.val();
+        
+        if (!registros) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No hay registros aún. Completa el primer formulario para comenzar.</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        Object.entries(registros).forEach(([id, data]) => {
+            const calificacionColor = data.calificacion === 'Excelente' ? '#10b981' : 
+                                     data.calificacion === 'Bueno' ? '#3b82f6' : 
+                                     data.calificacion === 'Regular' ? '#f59e0b' : '#ef4444';
+            
+            html += `
+                <tr>
+                    <td>${data.fecha}</td>
+                    <td>${data.tipo}</td>
+                    <td>${data.numeroParticipantes}</td>
+                    <td>${data.tiempoEvacuacion || 'N/A'}</td>
+                    <td><span style="color: ${calificacionColor}; font-weight: 600;">${data.calificacion}</span></td>
+                    <td>
+                        <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error al cargar registros:', error);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">❌ Error al cargar registros</td></tr>';
+    }
+}
+
+// Cargar registros al iniciar
+window.addEventListener('DOMContentLoaded', cargarRegistrosSimulacros);
+</script>
+
+
+                <!-- Tabla de registros -->
+                <div class="form-container" style="margin-top: 30px;">
+                    <h3 class="section-title">📋 Registro de Simulacros 2026</h3>
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Participantes</th>
+                                <th>Tiempo</th>
+                                <th>Calificación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="simulacrosRecords">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // FIREBASE CONFIGURATION - Torres de Anim II
+        // ═══════════════════════════════════════════════════════════════
+        const firebaseConfig = {
+            apiKey: "AIzaSyCb2pko11_UOP6V5VPQV_xARWrC5wybQ6w",
+            authDomain: "compliancepro--o--sistemass.firebaseapp.com",
+            databaseURL: "https://compliancepro--o--sistemass-default-rtdb.firebaseio.com",
+            projectId: "compliancepro--o--sistemass",
+            storageBucket: "compliancepro--o--sistemass.firebasestorage.app",
+            messagingSenderId: "188559834704",
+            appId: "1:188559834704:web:73f1b088e9dcda16ab9b55"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const EDIFICIO_ID = 'anim2';
+
+        console.log('✅ Firebase inicializado - Torres de Anim II');
+        console.log('📊 Edificio:', EDIFICIO_ID);
+
+        // ═══════════════════════════════════════════════════════════════
+        // TAB NAVIGATION
+        // ═══════════════════════════════════════════════════════════════
+        function showForm(formId) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('form-' + formId).classList.add('active');
+
+            // Update header
+            const titles = {
+                'induccion': '🎓 Inducción y Reinducción SST',
+                'inspecciones': '🔍 Inspecciones de Seguridad',
+                'mantenimiento': '🔧 Registro de Mantenimientos',
+                'contratistas': '🏗️ Seguimiento a Contratistas',
+                'accidentes': '⚠️ Investigación de Accidentes',
+                'simulacros': '🚨 Simulacros de Emergencia'
+            };
+            document.getElementById('pageTitle').textContent = titles[formId];
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════
+        // MANEJO DE ARCHIVOS ADJUNTOS
+        // ═══════════════════════════════════════════════════════════════
+
+        const archivosSeleccionados = {
+            induccion: [], inspeccion: [], mantenimiento: [],
+            contratistas: [], accidentes: [], simulacros: []
+        };
+
+        const formFileMap = {
+            formInduccion:     { key: 'induccion',     container: 'filesInduccion' },
+            formInspecciones:  { key: 'inspeccion',    container: 'filesInspeccion' },
+            formMantenimiento: { key: 'mantenimiento', container: 'filesMantenimiento' },
+            formContratistas:  { key: 'contratistas',  container: 'filesContratistas' },
+            formAccidentes:    { key: 'accidentes',    container: 'filesAccidentes' },
+            formSimulacros:    { key: 'simulacros',    container: 'filesSimulacros' }
+        };
+
+        function handleFileChange(inputId, containerId, formKey) {
+            const input = document.getElementById(inputId);
+            Array.from(input.files).forEach(f => archivosSeleccionados[formKey].push(f));
+            renderArchivosList(containerId, formKey);
+            input.value = '';
+        }
+
+        function renderArchivosList(containerId, formKey) {
+            const container = document.getElementById(containerId);
+            const files = archivosSeleccionados[formKey];
+            container.innerHTML = files.length === 0 ? '' : files.map((f, i) =>
+                `<div class="file-item">
+                    <span>📎 ${f.name} <small>(${(f.size/1024).toFixed(1)} KB)</small></span>
+                    <span class="file-remove" onclick="removeFile('${containerId}','${formKey}',${i})">✕</span>
+                </div>`
+            ).join('');
+        }
+
+        function removeFile(containerId, formKey, index) {
+            archivosSeleccionados[formKey].splice(index, 1);
+            renderArchivosList(containerId, formKey);
+        }
+
+        // ── Google Drive ──────────────────────────────────────────────
+        const GOOGLE_CLIENT_ID = 'TU_CLIENT_ID_AQUI'; // ← reemplazar
+        const DRIVE_CARPETA     = 'SST Torres de Anim II - Archivos';
+        let _driveToken = null;
+
+        function pedirTokenDrive() {
+            return new Promise((resolve, reject) => {
+                if (_driveToken) { resolve(_driveToken); return; }
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/drive.file',
+                    callback: (resp) => {
+                        if (resp.error) { reject(new Error(resp.error)); return; }
+                        _driveToken = resp.access_token;
+                        resolve(_driveToken);
+                    }
+                });
+                client.requestAccessToken();
+            });
+        }
+
+        async function drivePost(token, url, body) {
+            const r = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return r.json();
+        }
+
+        async function buscarCarpeta(token, nombre) {
+            const q = `name='${nombre}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+            const r = await fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id)', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const d = await r.json();
+            return d.files && d.files[0] ? d.files[0].id : null;
+        }
+
+        async function crearCarpeta(token, nombre, parentId) {
+            const body = { name: nombre, mimeType: 'application/vnd.google-apps.folder' };
+            if (parentId) body.parents = [parentId];
+            const d = await drivePost(token, 'https://www.googleapis.com/drive/v3/files', body);
+            return d.id;
+        }
+
+        async function subirArchivoADrive(token, file, folderId) {
+            const meta = { name: file.name, parents: [folderId] };
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+            form.append('file', file);
+            const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: form
+            });
+            return r.json();
+        }
+
+        async function uploadFilesAlStorage(formKey, registroId) {
+            const files = archivosSeleccionados[formKey];
+            if (!files.length) return [];
+            try {
+                const token = await pedirTokenDrive();
+                // Buscar o crear carpeta principal
+                let carpetaId = await buscarCarpeta(token, DRIVE_CARPETA);
+                if (!carpetaId) carpetaId = await crearCarpeta(token, DRIVE_CARPETA, null);
+                // Subcarpeta por registro
+                const subcarpeta = await crearCarpeta(token, formKey + '-' + registroId, carpetaId);
+                const archivos = [];
+                for (const file of files) {
+                    const res = await subirArchivoADrive(token, file, subcarpeta);
+                    archivos.push({ nombre: file.name, url: res.webViewLink, driveId: res.id });
+                }
+                return archivos;
+            } catch (err) {
+                console.error('Drive upload error:', err);
+                return archivosSeleccionados[formKey].map(f => ({ nombre: f.name, subido: false }));
+            }
+        }
+
+        function limpiarArchivos(formKey, containerId) {
+            archivosSeleccionados[formKey] = [];
+            const el = document.getElementById(containerId);
+            if (el) el.innerHTML = '';
+        }
+
+        function limpiarFormulario(formId) {
+            if (confirm('¿Limpiar el formulario? Se perderán los datos no guardados.')) {
+                document.getElementById(formId).reset();
+                const info = formFileMap[formId];
+                if (info) limpiarArchivos(info.key, info.container);
+                if (formId === 'formInduccion') document.getElementById('totalAsistentes').value = '';
+                if (formId === 'formContratistas') {
+                    document.getElementById('cumplimientoDisplay').textContent = '0%';
+                    document.getElementById('cumplimientoValue').value = '0';
+                }
+            }
+        }
+
+        function verDetalle(id) {
+            alert('Ver detalle: ' + id);
+        }
+
+        function eliminarRegistro(id) {
+            if (confirm('¿Eliminar este registro?')) {
+                // Implementar eliminación
+                alert('Registro eliminado: ' + id);
+            }
+        }
+    </script>
+</body>
+</html>

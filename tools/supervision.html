@@ -1,0 +1,1178 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisión Mensual SST - Torres de Anim II</title>
+
+    <!-- Firebase Scripts (v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .nav-buttons {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .form-section h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        /* Foto Upload Section */
+        .foto-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px dashed #667eea;
+            margin-bottom: 20px;
+        }
+
+        .foto-upload-area {
+            text-align: center;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .foto-upload-area:hover {
+            background: #e9ecef;
+        }
+
+        .foto-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .foto-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+
+        .fotos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .foto-card {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .foto-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .foto-card-info {
+            padding: 10px;
+            background: white;
+        }
+
+        .foto-card-info input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .foto-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .foto-delete:hover {
+            background: #c82333;
+        }
+
+        .hallazgos-container {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .hallazgo-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+
+        .hallazgo-item.negativo {
+            border-left-color: #dc3545;
+        }
+
+        .hallazgo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .nivel-riesgo {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .riesgo-alto {
+            background: #dc3545;
+            color: white;
+        }
+
+        .riesgo-medio {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .riesgo-bajo {
+            background: #28a745;
+            color: white;
+        }
+
+        .acciones-correctivas {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .resumen-supervision {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .resumen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .resumen-stat {
+            text-align: center;
+        }
+
+        .resumen-stat h3 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .resumen-stat p {
+            opacity: 0.9;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .sup-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+        .sup-table th { background:#1e3c72; color:#fff; padding:10px 12px; text-align:left; }
+        .sup-table td { padding:10px 12px; border-bottom:1px solid #e9ecef; vertical-align:top; }
+        .sup-table tr:hover td { background:#f0f4ff; }
+        .badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:.78rem; font-weight:700; }
+        .badge-pos { background:#d1fae5; color:#065f46; }
+        .badge-neg { background:#fee2e2; color:#991b1b; }
+        .badge-area { background:#dbeafe; color:#1e40af; margin:2px; }
+
+        @media (max-width: 768px) {
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .fotos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Supervisión Mensual SST</h1>
+            <p>Torres de Anim II | Sistema de registro con fotografías</p>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn btn-back" onclick="volverInicio()">← Volver al Inicio</button>
+            <button class="btn btn-primary" onclick="guardarBorrador()">💾 Guardar Borrador</button>
+            <button class="btn btn-primary" onclick="cargarSupervisiones()">📋 Ver Supervisiones Guardadas</button>
+        </div>
+
+        <div class="content">
+            <!-- Datos Generales -->
+            <div class="form-section">
+                <h2>📌 Datos Generales</h2>
+                <div class="form-group">
+                    <label>Fecha de Supervisión:</label>
+                    <input type="date" id="fecha" required>
+                </div>
+                <div class="form-group">
+                    <label>Responsable:</label>
+                    <input type="text" id="responsable" value="Carla Castellano Madriz (C.E. 679955)" readonly>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Hora Inicio:</label>
+                        <input type="time" id="horaInicio">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora Fin:</label>
+                        <input type="time" id="horaFin">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Áreas Inspeccionadas -->
+            <div class="form-section">
+                <h2>🏢 Áreas Inspeccionadas</h2>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-porteria" value="Portería">
+                        <label for="area-porteria">Portería</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-lobby" value="Lobby">
+                        <label for="area-lobby">Lobby</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-escaleras" value="Escaleras">
+                        <label for="area-escaleras">Escaleras</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-cuarto-maquinas" value="Cuarto de Máquinas">
+                        <label for="area-cuarto-maquinas">Cuarto de Máquinas</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-tanques" value="Tanques de Agua">
+                        <label for="area-tanques">Tanques de Agua</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-zonas-comunes" value="Zonas Comunes">
+                        <label for="area-zonas-comunes">Zonas Comunes</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-extintores" value="Extintores">
+                        <label for="area-extintores">Extintores</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="area-salidas" value="Salidas de Emergencia">
+                        <label for="area-salidas">Salidas de Emergencia</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subida de Fotos -->
+            <div class="form-section">
+                <h2>📸 Fotografías de la Supervisión</h2>
+                <div class="foto-section">
+                    <label for="foto-upload" class="foto-upload-area">
+                        <input type="file" id="foto-upload" accept="image/*" multiple onchange="procesarFotos(event)">
+                        <div class="foto-icon">📷</div>
+                        <p><strong>Click para subir fotos</strong></p>
+                        <p style="font-size: 0.9rem; color: #6c757d; margin-top: 10px;">
+                            Puedes seleccionar múltiples fotos<br>
+                            Formatos: JPG, PNG (Máx 5MB cada una)
+                        </p>
+                    </label>
+                    <div id="fotos-container" class="fotos-grid"></div>
+                </div>
+            </div>
+
+            <!-- Hallazgos Positivos -->
+            <div class="form-section">
+                <h2>✅ Hallazgos Positivos</h2>
+                <div class="form-group">
+                    <label>Describe los aspectos positivos encontrados:</label>
+                    <textarea id="hallazgos-positivos" placeholder="Ejemplo: Se encontró que todos los extintores están vigentes y correctamente señalizados..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="agregarHallazgoPositivo()">+ Agregar Hallazgo Positivo</button>
+                <div id="hallazgos-positivos-lista" class="hallazgos-container"></div>
+            </div>
+
+            <!-- Hallazgos Negativos -->
+            <div class="form-section">
+                <h2>⚠️ Hallazgos Negativos / Riesgos</h2>
+                <div class="form-group">
+                    <label>Describe el hallazgo negativo o condición de riesgo:</label>
+                    <textarea id="hallazgos-negativos-input" placeholder="Ejemplo: Se encontró extintor con fecha de recarga vencida en el piso 3..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="agregarHallazgoNegativo()">+ Agregar Hallazgo Negativo</button>
+                <div id="hallazgos-negativos-lista" class="hallazgos-container"></div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="resumen-supervision">
+                <h2 style="text-align: center; margin-bottom: 10px;">📊 Resumen de la Supervisión</h2>
+                <div class="resumen-grid">
+                    <div class="resumen-stat">
+                        <h3 id="total-fotos">0</h3>
+                        <p>Fotografías</p>
+                    </div>
+                    <div class="resumen-stat">
+                        <h3 id="total-hallazgos-positivos">0</h3>
+                        <p>Hallazgos Positivos</p>
+                    </div>
+                    <div class="resumen-stat">
+                        <h3 id="total-hallazgos-negativos">0</h3>
+                        <p>Hallazgos Negativos</p>
+                    </div>
+                    <div class="resumen-stat">
+                        <h3 id="total-areas">0</h3>
+                        <p>Áreas Inspeccionadas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="btnGuardar" onclick="guardarSupervision()">💾 Guardar Supervisión</button>
+                <button class="btn btn-primary" id="btnPDF" onclick="generarInformePDF()">📄 Generar Informe PDF</button>
+                <button class="btn btn-back" onclick="limpiarFormulario()">🗑️ Limpiar Todo</button>
+            </div>
+
+            <!-- Panel de estado -->
+            <div id="statusMsg" style="display:none; margin-top:20px; padding:14px 18px; border-radius:8px; font-weight:600; font-size:.95rem;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: Ver Supervisiones Guardadas -->
+    <div id="modalSupervisiones" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; overflow-y:auto; padding:20px;">
+        <div style="background:#fff; border-radius:14px; max-width:900px; margin:auto; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#1e3c72; font-size:1.3rem;">📋 Supervisiones Guardadas — Torres de Anim II</h2>
+                <button onclick="cerrarModal()" style="background:#dc3545; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-weight:700; cursor:pointer; font-size:1rem;">✕ Cerrar</button>
+            </div>
+            <div id="listaSupervisiones"></div>
+        </div>
+    </div>
+
+    <script>
+        let fotosArray = [];
+        let hallazgosPositivos = [];
+        let hallazgosNegativos = [];
+        let contadorHallazgosNegativos = 0;
+        let editandoId = null; // ID de la supervisión que se está editando (null = nueva)
+
+        // Cargar datos guardados
+        window.onload = function() {
+            cargarBorrador();
+            document.getElementById('fecha').valueAsDate = new Date();
+            actualizarResumen();
+        };
+
+        function procesarFotos(event) {
+            const files = event.target.files;
+            
+            for (let file of files) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La foto ' + file.name + ' es muy grande (máx 5MB)');
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fotoObj = {
+                        id: Date.now() + Math.random(),
+                        nombre: file.name,
+                        data: e.target.result,
+                        descripcion: '',
+                        area: ''
+                    };
+                    
+                    fotosArray.push(fotoObj);
+                    renderizarFotos();
+                    actualizarResumen();
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderizarFotos() {
+            const container = document.getElementById('fotos-container');
+            container.innerHTML = '';
+
+            fotosArray.forEach((foto, index) => {
+                const card = document.createElement('div');
+                card.className = 'foto-card';
+                card.innerHTML = `
+                    <img src="${foto.data}" alt="${foto.nombre}">
+                    <button class="foto-delete" onclick="eliminarFoto(${index})">×</button>
+                    <div class="foto-card-info">
+                        <input type="text" placeholder="Descripción de la foto..." 
+                               value="${foto.descripcion}" 
+                               onchange="actualizarDescripcionFoto(${index}, this.value)">
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function eliminarFoto(index) {
+            if (confirm('¿Eliminar esta foto?')) {
+                fotosArray.splice(index, 1);
+                renderizarFotos();
+                actualizarResumen();
+            }
+        }
+
+        function actualizarDescripcionFoto(index, descripcion) {
+            fotosArray[index].descripcion = descripcion;
+        }
+
+        function agregarHallazgoPositivo() {
+            const texto = document.getElementById('hallazgos-positivos').value.trim();
+            if (!texto) {
+                alert('Escribe el hallazgo positivo');
+                return;
+            }
+
+            hallazgosPositivos.push({
+                id: Date.now(),
+                texto: texto
+            });
+
+            document.getElementById('hallazgos-positivos').value = '';
+            renderizarHallazgosPositivos();
+            actualizarResumen();
+        }
+
+        function renderizarHallazgosPositivos() {
+            const container = document.getElementById('hallazgos-positivos-lista');
+            container.innerHTML = '';
+
+            hallazgosPositivos.forEach((hallazgo, index) => {
+                const item = document.createElement('div');
+                item.className = 'hallazgo-item';
+                item.innerHTML = `
+                    <div class="hallazgo-header">
+                        <h4>✅ Hallazgo Positivo #${index + 1}</h4>
+                        <button class="btn" onclick="eliminarHallazgoPositivo(${index})" 
+                                style="background: #dc3545; color: white; padding: 5px 15px;">
+                            Eliminar
+                        </button>
+                    </div>
+                    <p>${hallazgo.texto}</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function eliminarHallazgoPositivo(index) {
+            if (confirm('¿Eliminar este hallazgo?')) {
+                hallazgosPositivos.splice(index, 1);
+                renderizarHallazgosPositivos();
+                actualizarResumen();
+            }
+        }
+
+        function agregarHallazgoNegativo() {
+            const textoInicial = document.getElementById('hallazgos-negativos-input').value.trim();
+
+            contadorHallazgosNegativos++;
+            const id = Date.now();
+
+            const container = document.getElementById('hallazgos-negativos-lista');
+            const item = document.createElement('div');
+            item.className = 'hallazgo-item negativo';
+            item.id = 'hallazgo-' + id;
+            item.innerHTML = `
+                <div class="hallazgo-header">
+                    <h4>⚠️ Hallazgo Negativo #${contadorHallazgosNegativos}</h4>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="nivel-${id}" class="nivel-riesgo" onchange="actualizarNivelRiesgo(this)">
+                            <option value="alto">Alto</option>
+                            <option value="medio" selected>Medio</option>
+                            <option value="bajo">Bajo</option>
+                        </select>
+                        <button class="btn" onclick="eliminarHallazgoNegativo('${id}')"
+                                style="background: #dc3545; color: white; padding: 5px 15px;">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Descripción del hallazgo:</label>
+                    <textarea id="desc-${id}" placeholder="Describe el riesgo o condición insegura encontrada...">${textoInicial}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Área/Ubicación:</label>
+                    <input type="text" id="ubicacion-${id}" placeholder="Ej: 3er piso, escalera principal">
+                </div>
+                <div class="form-group">
+                    <label>Foto relacionada (opcional):</label>
+                    <select id="foto-${id}">
+                        <option value="">Ninguna</option>
+                        ${fotosArray.map((f, i) => `<option value="${i}">Foto ${i + 1}: ${f.nombre}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="acciones-correctivas">
+                    <label><strong>Acción Correctiva:</strong></label>
+                    <textarea id="accion-${id}" placeholder="¿Qué se debe hacer para corregir este hallazgo?"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div>
+                            <label>Responsable:</label>
+                            <input type="text" id="responsable-${id}" placeholder="Nombre">
+                        </div>
+                        <div>
+                            <label>Plazo:</label>
+                            <input type="date" id="plazo-${id}">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(item);
+
+            // Limpiar el campo de entrada
+            document.getElementById('hallazgos-negativos-input').value = '';
+
+            hallazgosNegativos.push({ id: id });
+            actualizarResumen();
+        }
+
+        function actualizarNivelRiesgo(select) {
+            const nivel = select.value;
+            select.className = 'nivel-riesgo riesgo-' + nivel;
+        }
+
+        function eliminarHallazgoNegativo(id) {
+            if (confirm('¿Eliminar este hallazgo?')) {
+                document.getElementById('hallazgo-' + id).remove();
+                hallazgosNegativos = hallazgosNegativos.filter(h => h.id != id);
+                actualizarResumen();
+            }
+        }
+
+        function actualizarResumen() {
+            document.getElementById('total-fotos').textContent = fotosArray.length;
+            document.getElementById('total-hallazgos-positivos').textContent = hallazgosPositivos.length;
+            document.getElementById('total-hallazgos-negativos').textContent = hallazgosNegativos.length;
+            
+            const checkboxes = document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked');
+            document.getElementById('total-areas').textContent = checkboxes.length;
+        }
+
+        function setStatus(msg, tipo) {
+            const el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.style.display = 'block';
+            if      (tipo === 'success') { el.style.background='#d1fae5'; el.style.color='#065f46'; el.style.border='2px solid #10b981'; }
+            else if (tipo === 'error')   { el.style.background='#fee2e2'; el.style.color='#991b1b'; el.style.border='2px solid #dc2626'; }
+            else if (tipo === 'warning') { el.style.background='#fef3c7'; el.style.color='#92400e'; el.style.border='2px solid #f59e0b'; }
+            else                         { el.style.background='#dbeafe'; el.style.color='#1e40af'; el.style.border='2px solid #2563eb'; }
+        }
+
+        async function guardarSupervision() {
+            const datos = recopilarDatos();
+            if (!datos.fecha) { setStatus('Por favor ingrese la fecha de supervision.', 'error'); return; }
+
+            const btn = document.getElementById('btnGuardar');
+            const esEdicion = !!editandoId;
+            btn.disabled = true;
+            btn.textContent = esEdicion ? 'Actualizando...' : 'Guardando...';
+            setStatus(esEdicion ? 'Actualizando supervision en Firebase...' : 'Guardando supervision en Firebase...', 'info');
+
+            // Si es edición reutiliza el mismo ID, si es nueva crea uno nuevo
+            const supervisionId = esEdicion ? editandoId : 'supervision-' + Date.now();
+            try {
+                await database.ref(`edificios/${EDIFICIO_ID}/supervisiones/${supervisionId}`).set(datos);
+                localStorage.setItem('supervision_borrador_nepal2', JSON.stringify(datos));
+                console.log('Supervision guardada:', supervisionId, '| edicion:', esEdicion);
+                setStatus((esEdicion ? 'Supervision ACTUALIZADA' : 'Supervision guardada') + ' correctamente. ID: ' + supervisionId, 'success');
+                // Limpiar modo edición
+                editandoId = null;
+                document.getElementById('btnGuardar').textContent = 'Guardar Supervision';
+                document.getElementById('modoEdicionBanner')?.remove();
+            } catch(err) {
+                console.error('Error guardando:', err);
+                setStatus('Error al guardar en Firebase: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+            return supervisionId;
+        }
+
+        function guardarBorrador() {
+            const datos = recopilarDatos();
+            localStorage.setItem('supervision_borrador_nepal2', JSON.stringify(datos));
+            setStatus('Borrador guardado localmente.', 'info');
+        }
+
+        function cargarBorrador() {
+            const borrador = localStorage.getItem('supervision_borrador_nepal2');
+            if (borrador) {
+                console.log('Borrador encontrado en localStorage (no se carga automaticamente).');
+            }
+        }
+
+        // ============================================
+        // VER SUPERVISIONES GUARDADAS (panel visual)
+        // ============================================
+        async function cargarSupervisiones() {
+            const lista = document.getElementById('listaSupervisiones');
+            lista.innerHTML = '<p style="color:#64748b; padding:10px;">Cargando...</p>';
+            document.getElementById('modalSupervisiones').style.display = 'block';
+
+            try {
+                const leer = async (ruta) => {
+                    try {
+                        const snap = await database.ref(ruta).once('value');
+                        if (!snap.exists()) return [];
+                        const arr = [];
+                        snap.forEach(child => arr.push({ id: child.key, _ruta: ruta, ...child.val() }));
+                        return arr;
+                    } catch(e) { return []; }
+                };
+
+                const sups = await leer(`edificios/anim2/supervisiones`);
+                sups.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                if (sups.length === 0) {
+                    lista.innerHTML = '<p style="color:#64748b; padding:20px; text-align:center;">No hay supervisiones guardadas aun.</p>';
+                    return;
+                }
+                mostrarListaSupervisiones(sups);
+            } catch(err) {
+                lista.innerHTML = '<p style="color:#dc2626; padding:20px;">Error al cargar: ' + err.message + '</p>';
+                console.error(err);
+            }
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalSupervisiones').style.display = 'none';
+        }
+
+        function editarSupervision(sup) {
+            cerrarModal();
+
+            // Marcar que estamos editando
+            editandoId = sup.id;
+
+            // Rellenar campos básicos
+            document.getElementById('fecha').value        = sup.fecha || '';
+            document.getElementById('horaInicio').value   = sup.horaInicio || '';
+            document.getElementById('horaFin').value      = sup.horaFin || '';
+
+            // Marcar checkboxes de áreas
+            document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => {
+                cb.checked = Array.isArray(sup.areas) && sup.areas.includes(cb.value);
+            });
+
+            // Restaurar hallazgos positivos
+            hallazgosPositivos = Array.isArray(sup.hallazgosPositivos)
+                ? sup.hallazgosPositivos.map(h => ({ id: Date.now() + Math.random(), texto: h.texto || String(h) }))
+                : [];
+            renderizarHallazgosPositivos();
+
+            // Restaurar hallazgos negativos (limpiar primero)
+            hallazgosNegativos = [];
+            document.getElementById('hallazgos-negativos-lista').innerHTML = '';
+            if (Array.isArray(sup.hallazgosNegativos)) {
+                sup.hallazgosNegativos.forEach(h => {
+                    // Pre-llenar el textarea de entrada y agregar
+                    document.getElementById('hallazgos-negativos-input').value = h.descripcion || '';
+                    agregarHallazgoNegativo();
+                    // Rellenar los demás campos del hallazgo recién creado
+                    const id = hallazgosNegativos[hallazgosNegativos.length - 1].id;
+                    if (document.getElementById('nivel-'    + id)) document.getElementById('nivel-'    + id).value = h.nivel    || 'medio';
+                    if (document.getElementById('ubicacion-'+ id)) document.getElementById('ubicacion-'+ id).value = h.ubicacion|| '';
+                    if (document.getElementById('accion-'   + id)) document.getElementById('accion-'   + id).value = h.accion   || '';
+                    if (document.getElementById('responsable-'+id)) document.getElementById('responsable-'+id).value = h.responsable || '';
+                    if (document.getElementById('plazo-'    + id)) document.getElementById('plazo-'    + id).value = h.plazo    || '';
+                });
+            }
+
+            // Fotos existentes (sin datos binarios, solo referencias)
+            fotosArray = [];
+            renderizarFotos();
+
+            actualizarResumen();
+
+            // Mostrar banner de modo edición
+            const existing = document.getElementById('modoEdicionBanner');
+            if (existing) existing.remove();
+            const banner = document.createElement('div');
+            banner.id = 'modoEdicionBanner';
+            banner.style.cssText = 'background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;padding:12px 18px;margin-bottom:20px;font-weight:700;color:#92400e;';
+            banner.innerHTML = '&#9998; Modo edición: supervisión del ' + (sup.fecha || 'sin fecha') + ' — Modifica los campos y haz clic en "Guardar Supervision" para actualizar.';
+            document.querySelector('.content').insertBefore(banner, document.querySelector('.form-section'));
+
+            // Actualizar texto del botón
+            document.getElementById('btnGuardar').textContent = 'Actualizar Supervision';
+
+            // Scroll arriba para ver el formulario
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setStatus('Editando supervision del ' + (sup.fecha || 'sin fecha') + '. Modifica y guarda.', 'warning');
+        }
+
+        function mostrarListaSupervisiones(supervisiones) {
+            const lista = document.getElementById('listaSupervisiones');
+            let html = `<p style="color:#64748b; margin-bottom:14px; font-size:.88rem;">${supervisiones.length} supervision(es) encontrada(s) en Torres de Anim II</p>`;
+            // Guardamos las supervisiones en window para acceder desde los botones
+            window._supervisiones_cargadas = supervisiones;
+
+            html += '<table class="sup-table"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Areas</th><th>Hall. Positivos</th><th>Hall. Negativos</th><th>Fotos</th><th>Accion</th></tr></thead><tbody>';
+
+            supervisiones.forEach((sup, i) => {
+                const fecha = sup.fecha || '—';
+                const hora  = sup.horaInicio ? (sup.horaInicio + (sup.horaFin ? ' - ' + sup.horaFin : '')) : '—';
+                const areas = Array.isArray(sup.areas) ? sup.areas.map(a => `<span class="badge badge-area">${a}</span>`).join(' ') : (sup.areas || '—');
+                const pos   = Array.isArray(sup.hallazgosPositivos) ? sup.hallazgosPositivos.length : 0;
+                const neg   = Array.isArray(sup.hallazgosNegativos) ? sup.hallazgosNegativos.length : 0;
+                const fotos = Array.isArray(sup.fotos) ? sup.fotos.length : 0;
+
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td><strong>${fecha}</strong></td>
+                    <td>${hora}</td>
+                    <td>${areas}</td>
+                    <td><span class="badge badge-pos">${pos} positivos</span></td>
+                    <td><span class="badge badge-neg">${neg} negativos</span></td>
+                    <td>${fotos}</td>
+                    <td><button onclick="editarSupervision(window._supervisiones_cargadas[${i}])" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:.82rem;">&#9998; Editar</button></td>
+                </tr>`;
+
+                // Detalle de hallazgos negativos
+                if (Array.isArray(sup.hallazgosNegativos) && sup.hallazgosNegativos.length > 0) {
+                    html += `<tr><td colspan="8" style="background:#fff8f8; padding:10px 14px;">`;
+                    html += `<strong style="color:#991b1b;">Hallazgos negativos:</strong><ul style="margin:6px 0 0 18px;">`;
+                    sup.hallazgosNegativos.forEach(h => {
+                        html += `<li style="font-size:.85rem; margin-bottom:4px;"><strong>[${h.nivel || 'medio'}]</strong> ${h.descripcion || '—'} ${h.ubicacion ? '— Ubicacion: '+h.ubicacion : ''} ${h.accion ? '<br><em>Accion: '+h.accion+'</em>' : ''}</li>`;
+                    });
+                    html += '</ul></td></tr>';
+                }
+            });
+
+            html += '</tbody></table>';
+            lista.innerHTML = html;
+        }
+
+        function recopilarDatos() {
+            const checkboxes = document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked');
+            const areas = Array.from(checkboxes).map(cb => cb.value);
+            
+            const hallazgosNeg = hallazgosNegativos.map(h => {
+                return {
+                    nivel: document.getElementById('nivel-' + h.id).value,
+                    descripcion: document.getElementById('desc-' + h.id).value,
+                    ubicacion: document.getElementById('ubicacion-' + h.id).value,
+                    foto: document.getElementById('foto-' + h.id).value,
+                    accion: document.getElementById('accion-' + h.id).value,
+                    responsable: document.getElementById('responsable-' + h.id).value,
+                    plazo: document.getElementById('plazo-' + h.id).value
+                };
+            });
+
+            return {
+                fecha: document.getElementById('fecha').value,
+                horaInicio: document.getElementById('horaInicio').value,
+                horaFin: document.getElementById('horaFin').value,
+                responsable: document.getElementById('responsable').value,
+                areas: areas,
+                fotos: fotosArray,
+                hallazgosPositivos: hallazgosPositivos,
+                hallazgosNegativos: hallazgosNeg,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        async function generarInformePDF() {
+            const datos = recopilarDatos();
+            if (!datos.fecha) { setStatus('Ingrese la fecha de supervision antes de generar el PDF.', 'error'); return; }
+
+            const btn = document.getElementById('btnPDF');
+            btn.disabled = true; btn.textContent = 'Generando PDF...';
+            setStatus('Generando PDF de supervision...', 'info');
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'letter' });
+                const PW = doc.internal.pageSize.getWidth();
+                const PH = doc.internal.pageSize.getHeight();
+                const MRG = 20;
+                const CTW = PW - MRG*2;
+
+                const C_AZUL  = [30, 60, 114];
+                const C_MED   = [102, 126, 234];
+                const C_BLANC = [255, 255, 255];
+                const C_GRIS  = [248, 249, 250];
+                const C_TEXT  = [71, 85, 105];
+                const C_NEGRO = [30, 41, 59];
+
+                // Pies de pagina
+                function addFooters() {
+                    const total = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= total; i++) {
+                        doc.setPage(i);
+                        doc.setDrawColor(200,210,220); doc.setLineWidth(.3);
+                        doc.line(MRG, PH-14, PW-MRG, PH-14);
+                        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C_TEXT);
+                        doc.text('SG-SST - Torres de Anim II - Bogota, Colombia', MRG, PH-9);
+                        doc.text('Pagina ' + i + ' de ' + total, PW-MRG, PH-9, { align:'right' });
+                    }
+                }
+
+                // PORTADA
+                doc.setFillColor(...C_AZUL);
+                doc.rect(0, 0, PW, 50, 'F');
+                doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...C_BLANC);
+                doc.text('SUPERVISION MENSUAL SST', PW/2, 22, { align:'center' });
+                doc.setFontSize(11);
+                doc.text('Torres de Anim II', PW/2, 33, { align:'center' });
+                doc.setFontSize(9); doc.setTextColor(186,230,253);
+                doc.text('Sistema de Gestion de Seguridad y Salud en el Trabajo', PW/2, 42, { align:'center' });
+
+                const fechaFmt = datos.fecha
+                    ? new Date(datos.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' })
+                    : 'Sin fecha';
+
+                doc.autoTable({
+                    startY: 60,
+                    margin: { left: MRG+25, right: MRG+25 },
+                    head: [['Campo','Informacion']],
+                    body: [
+                        ['Edificio',      'Torres de Anim II'],
+                        ['Fecha',         fechaFmt],
+                        ['Hora inicio',   datos.horaInicio || 'No registrada'],
+                        ['Hora fin',      datos.horaFin || 'No registrada'],
+                        ['Responsable',   datos.responsable || 'Carla Castellano Madriz'],
+                        ['Areas revisadas', Array.isArray(datos.areas) ? datos.areas.join(', ') : 'No especificadas'],
+                        ['Fotos adjuntas', String(datos.fotos ? datos.fotos.length : 0)],
+                        ['Hall. positivos', String(datos.hallazgosPositivos ? datos.hallazgosPositivos.length : 0)],
+                        ['Hall. negativos', String(datos.hallazgosNegativos ? datos.hallazgosNegativos.length : 0)],
+                    ],
+                    headStyles: { fillColor: C_AZUL, textColor: C_BLANC, fontStyle:'bold', halign:'center', fontSize:9.5 },
+                    columnStyles: { 0:{ fontStyle:'bold', textColor:C_AZUL, cellWidth:55 } },
+                    bodyStyles: { fontSize:9.5, cellPadding:5 },
+                    alternateRowStyles: { fillColor: C_GRIS },
+                    theme:'grid',
+                });
+
+                let y = doc.lastAutoTable.finalY + 14;
+
+                // Hallazgos Positivos
+                if (datos.hallazgosPositivos && datos.hallazgosPositivos.length > 0) {
+                    if (y > PH-60) { doc.addPage(); y = MRG+10; }
+                    doc.setFillColor(...C_AZUL);
+                    doc.roundedRect(MRG, y-5, CTW, 9, 1, 1, 'F');
+                    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C_BLANC);
+                    doc.text('HALLAZGOS POSITIVOS', MRG+5, y+1);
+                    y += 12;
+
+                    doc.autoTable({
+                        startY: y, margin:{ left:MRG, right:MRG },
+                        head: [['#','Hallazgo Positivo']],
+                        body: datos.hallazgosPositivos.map((h,i) => [String(i+1), h.texto || String(h)]),
+                        headStyles: { fillColor: [5,150,105], textColor: C_BLANC, fontStyle:'bold', fontSize:9 },
+                        bodyStyles: { fontSize:9, cellPadding:4 },
+                        columnStyles: { 0:{cellWidth:12, halign:'center'} },
+                        alternateRowStyles: { fillColor: [240,253,244] },
+                        theme:'grid',
+                    });
+                    y = doc.lastAutoTable.finalY + 10;
+                }
+
+                // Hallazgos Negativos
+                if (datos.hallazgosNegativos && datos.hallazgosNegativos.length > 0) {
+                    if (y > PH-60) { doc.addPage(); y = MRG+10; }
+                    doc.setFillColor(185, 28, 28);
+                    doc.roundedRect(MRG, y-5, CTW, 9, 1, 1, 'F');
+                    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C_BLANC);
+                    doc.text('HALLAZGOS NEGATIVOS / RIESGOS', MRG+5, y+1);
+                    y += 12;
+
+                    doc.autoTable({
+                        startY: y, margin:{ left:MRG, right:MRG },
+                        head: [['#','Nivel','Descripcion','Ubicacion','Accion Correctiva','Responsable','Plazo']],
+                        body: datos.hallazgosNegativos.map((h,i) => [
+                            String(i+1),
+                            (h.nivel || 'medio').toUpperCase(),
+                            h.descripcion || '—',
+                            h.ubicacion || '—',
+                            h.accion || '—',
+                            h.responsable || '—',
+                            h.plazo || '—',
+                        ]),
+                        headStyles: { fillColor: [185,28,28], textColor: C_BLANC, fontStyle:'bold', fontSize:8.5 },
+                        bodyStyles: { fontSize:8, cellPadding:3.5 },
+                        columnStyles: {
+                            0:{cellWidth:10, halign:'center'},
+                            1:{cellWidth:18, halign:'center'},
+                            2:{cellWidth:50},
+                            3:{cellWidth:28},
+                            4:{cellWidth:42},
+                            5:{cellWidth:24},
+                            6:{cellWidth:22},
+                        },
+                        alternateRowStyles: { fillColor: [254,242,242] },
+                        theme:'grid',
+                    });
+                    y = doc.lastAutoTable.finalY + 10;
+                }
+
+                // Firma
+                if (y > PH-55) { doc.addPage(); y = MRG+10; }
+                y += 10;
+                doc.setDrawColor(...C_AZUL); doc.setLineWidth(.8);
+                doc.line(MRG+10, y, MRG+100, y);
+                y += 7;
+                doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C_AZUL);
+                doc.text('Carla Castellano Madriz', MRG+10, y); y += 6;
+                doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...C_NEGRO);
+                doc.text('Coordinadora SG-SST', MRG+10, y); y += 5.5;
+                doc.text('C.E. 679955', MRG+10, y); y += 5.5;
+                doc.setFontSize(8.5); doc.setTextColor(...C_TEXT);
+                doc.text('Fecha de supervision: ' + fechaFmt, MRG+10, y);
+
+                addFooters();
+
+                const nombreArchivo = 'Supervision_SST_Nepal2_' + (datos.fecha || 'sin-fecha').replace(/-/g,'') + '.pdf';
+                doc.save(nombreArchivo);
+                setStatus('PDF generado y descargado: ' + nombreArchivo, 'success');
+                console.log('PDF guardado:', nombreArchivo);
+            } catch(err) {
+                console.error('Error PDF:', err);
+                setStatus('Error al generar PDF: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Generar Informe PDF';
+            }
+        }
+
+        function limpiarFormulario() {
+            if (confirm('¿Estás segura de limpiar todo el formulario?')) {
+                fotosArray = [];
+                hallazgosPositivos = [];
+                hallazgosNegativos = [];
+                contadorHallazgosNegativos = 0;
+                
+                renderizarFotos();
+                renderizarHallazgosPositivos();
+                document.getElementById('hallazgos-negativos-lista').innerHTML = '';
+                
+                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                document.querySelectorAll('textarea').forEach(ta => ta.value = '');
+                document.querySelectorAll('input[type="text"]').forEach(inp => {
+                    if (inp.id !== 'responsable') inp.value = '';
+                });
+                
+                actualizarResumen();
+            }
+        }
+
+        function volverInicio() {
+            if (confirm('¿Volver al inicio? (Se guardará un borrador automáticamente)')) {
+                guardarBorrador();
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Actualizar resumen al cambiar checkboxes
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox') {
+                actualizarResumen();
+            }
+        });
+
+        // ============================================
+        // FIREBASE CONFIGURATION - Convivienda 1
+        // ============================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyCb2pko11_UOP6V5VPQV_xARWrC5wybQ6w",
+          authDomain: "compliancepro--o--sistemass.firebaseapp.com",
+          databaseURL: "https://compliancepro--o--sistemass-default-rtdb.firebaseio.com",
+          projectId: "compliancepro--o--sistemass",
+          storageBucket: "compliancepro--o--sistemass.firebasestorage.app",
+          messagingSenderId: "188559834704",
+          appId: "1:188559834704:web:73f1b088e9dcda16ab9b55"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
+
+        // Edificio ID — Torres de Anim II
+        const EDIFICIO_ID = 'anim2';
+
+        console.log('Firebase inicializado - Modulo Supervision Torres de Anim II');
+        console.log('Ruta Firebase: edificios/' + EDIFICIO_ID + '/supervisiones');
+    </script>
+</body>
+</html>

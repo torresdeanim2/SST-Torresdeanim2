@@ -1,0 +1,1277 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de Informe Mensual SST — Torres de Anim II</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, #1f4e78 0%, #2563eb 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .header h1 { font-size: 1.6rem; font-weight: 700; }
+    .header p  { margin-top: 6px; font-size: .92rem; opacity: .88; }
+
+    /* CARDS */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1f4e78;
+      margin-bottom: 18px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    /* FORM */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: .83rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .3px; }
+    .form-group select,
+    .form-group input[type="date"],
+    .form-group input[type="text"] {
+      padding: 10px 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: .95rem;
+      background: #f8fafc;
+      transition: border-color .2s;
+    }
+    .form-group select:focus,
+    .form-group input:focus { outline: none; border-color: #2563eb; background: #fff; }
+
+    /* TEXTAREAS */
+    .textarea-section { display: flex; flex-direction: column; gap: 18px; }
+    .textarea-group { display: flex; flex-direction: column; gap: 6px; }
+    .textarea-group label { font-size: .88rem; font-weight: 700; color: #1f4e78; }
+    .textarea-group textarea {
+      width: 100%;
+      min-height: 155px;
+      padding: 12px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: .88rem;
+      line-height: 1.6;
+      resize: vertical;
+      background: #f8fafc;
+      font-family: Arial, sans-serif;
+      transition: border-color .2s;
+    }
+    .textarea-group textarea:focus { outline: none; border-color: #2563eb; background: #fff; }
+
+    /* BUTTONS */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 13px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: .96rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex: 1;
+      justify-content: center;
+      min-width: 200px;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    .btn-ai  { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+    .btn-ai:hover:not(:disabled) { background: linear-gradient(135deg, #047857, #059669); }
+
+    .btn-save { background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; }
+    .btn-save:hover:not(:disabled) { background: linear-gradient(135deg, #b45309, #d97706); }
+
+    .btn-pdf { background: linear-gradient(135deg, #1f4e78, #2563eb); color: #fff; }
+    .btn-pdf:hover:not(:disabled) { background: linear-gradient(135deg, #1e3a5f, #1d4ed8); }
+
+    .btn-all { background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; }
+    .btn-all:hover:not(:disabled) { background: linear-gradient(135deg, #6d28d9, #7c3aed); }
+
+    /* STATUS */
+    #statusBar {
+      display: none;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: .88rem;
+      font-weight: 600;
+      margin-top: 16px;
+      border-left: 4px solid;
+      line-height: 1.5;
+    }
+    #statusBar.info    { background: #eff6ff; color: #1d4ed8; border-color: #2563eb; }
+    #statusBar.success { background: #f0fdf4; color: #166534; border-color: #16a34a; }
+    #statusBar.error   { background: #fef2f2; color: #991b1b; border-color: #dc2626; }
+    #statusBar.warning { background: #fffbeb; color: #92400e; border-color: #f59e0b; }
+
+    /* STATS */
+    #statsPreview { display: none; margin-top: 18px; }
+    #statsPreview h3 { font-size: .88rem; font-weight: 700; color: #1f4e78; margin-bottom: 10px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+    .stat-box {
+      background: #f0f9ff;
+      border: 1.5px solid #bae6fd;
+      border-radius: 8px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .stat-box .num { font-size: 1.5rem; font-weight: 800; color: #0369a1; }
+    .stat-box .lbl { font-size: .7rem; color: #475569; margin-top: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+
+    /* HALLAZGOS DETAIL */
+    #hallazgosDetalle { display: none; margin-top: 16px; }
+    #hallazgosDetalle h3 { font-size: .88rem; font-weight: 700; color: #92400e; margin-bottom: 10px; }
+    .hallazgo-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 700;
+      margin: 3px 3px 3px 0;
+    }
+    .tag-critico  { background: #fee2e2; color: #991b1b; }
+    .tag-alto     { background: #ffedd5; color: #9a3412; }
+    .tag-medio    { background: #fef9c3; color: #854d0e; }
+    .tag-bajo     { background: #dcfce7; color: #166534; }
+    .tag-ok       { background: #dbeafe; color: #1d4ed8; }
+
+    .footer {
+      text-align: center;
+      font-size: .76rem;
+      color: #94a3b8;
+      margin-top: 32px;
+      padding-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>📋 Generador de Informe Mensual SST</h1>
+    <p>Torres de Anim II · Sistema de Gestión de Seguridad y Salud en el Trabajo</p>
+  </div>
+
+  <!-- CONFIGURACIÓN -->
+  <div class="card">
+    <h2>⚙️ Configuración del Informe</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Mes del informe</label>
+        <select id="selMes">
+          <option value="">— Seleccione —</option>
+          <option value="0">Enero</option><option value="1">Febrero</option>
+          <option value="2">Marzo</option><option value="3">Abril</option>
+          <option value="4">Mayo</option><option value="5">Junio</option>
+          <option value="6">Julio</option><option value="7">Agosto</option>
+          <option value="8">Septiembre</option><option value="9">Octubre</option>
+          <option value="10">Noviembre</option><option value="11">Diciembre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Año</label>
+        <select id="selAnio">
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fecha de elaboración</label>
+        <input type="date" id="fechaElab" />
+      </div>
+      <div class="form-group">
+        <label>Responsable SST</label>
+        <input type="text" id="responsable" value="Carla Castellano Madriz" />
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ai" id="btnTextos" onclick="generarTextos()">
+        🤖 Generar Textos Automáticos
+      </button>
+      <button class="btn btn-all" id="btnTodo" onclick="guardarYGenerarPDF()">
+        💾📄 Guardar en Firebase y Generar PDF
+      </button>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px;">
+      <button class="btn btn-save" id="btnSolo" onclick="soloGuardarFirebase()" style="font-size:.88rem; padding:10px 18px; min-width:160px;">
+        ☁️ Solo Guardar en Firebase
+      </button>
+      <button class="btn btn-pdf" id="btnPDF" onclick="soloGenerarPDF()" style="font-size:.88rem; padding:10px 18px; min-width:160px;">
+        📄 Solo Generar PDF
+      </button>
+    </div>
+
+    <div id="statusBar"></div>
+
+    <!-- Estadísticas -->
+    <div id="statsPreview">
+      <h3>📊 Datos cargados — <span id="lblMesAnio"></span></h3>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="num" id="stSuper">0</div><div class="lbl">Supervisiones</div></div>
+        <div class="stat-box"><div class="num" id="stInspec">0</div><div class="lbl">Inspecciones</div></div>
+        <div class="stat-box"><div class="num" id="stInduc">0</div><div class="lbl">Capacitaciones</div></div>
+        <div class="stat-box"><div class="num" id="stMant">0</div><div class="lbl">Mantenimientos</div></div>
+        <div class="stat-box"><div class="num" id="stCump">—</div><div class="lbl">Cumplimiento</div></div>
+        <div class="stat-box"><div class="num" id="stHallNeg">0</div><div class="lbl">Hall. negativos</div></div>
+      </div>
+    </div>
+
+    <!-- Detalle hallazgos -->
+    <div id="hallazgosDetalle">
+      <h3>⚠️ Hallazgos identificados en inspecciones:</h3>
+      <div id="hallazgosTags"></div>
+    </div>
+  </div>
+
+  <!-- TEXTOS EDITABLES -->
+  <div class="card">
+    <h2>✏️ Textos del Informe (editables antes de generar PDF)</h2>
+    <div class="textarea-section">
+      <div class="textarea-group">
+        <label>1. Introducción</label>
+        <textarea id="txtIntro" placeholder="Haga clic en 'Generar Textos Automáticos' o escriba aquí..."></textarea>
+      </div>
+      <div class="textarea-group">
+        <label>2. Análisis de Actividades</label>
+        <textarea id="txtAnalisis" placeholder="Descripción detallada de las actividades del período..."></textarea>
+      </div>
+      <div class="textarea-group">
+        <label>3. Hallazgos y Observaciones</label>
+        <textarea id="txtHallazgos" placeholder="Hallazgos e inspecciones del período..."></textarea>
+      </div>
+      <div class="textarea-group">
+        <label>4. Conclusiones</label>
+        <textarea id="txtConclusiones" placeholder="Conclusiones del período evaluado..."></textarea>
+      </div>
+      <div class="textarea-group">
+        <label>5. Recomendaciones</label>
+        <textarea id="txtRecomendaciones" placeholder="Recomendaciones para el siguiente período..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Sistema SG-SST · Torres de Anim II · Bogotá, Colombia
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  FIREBASE
+// ─────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCb2pko11_UOP6V5VPQV_xARWrC5wybQ6w",
+  authDomain: "compliancepro--o--sistemass.firebaseapp.com",
+  databaseURL: "https://compliancepro--o--sistemass-default-rtdb.firebaseio.com",
+  projectId: "compliancepro--o--sistemass"
+};
+
+let db;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  console.log("[Firebase] OK");
+} catch(e) { console.error("[Firebase] Error:", e); }
+
+// ─────────────────────────────────────────
+//  CONSTANTES
+// ─────────────────────────────────────────
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+               "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+// Etiquetas de los ítems del checklist
+const CHECKLIST_LOCATIVA = {
+  escaleras:       "Escaleras en buen estado (peldaños, pasamanos)",
+  cintas:          "Cintas antideslizantes en escaleras",
+  iluminacion:     "Iluminación zonas comunes funcional",
+  lucesEmergencia: "Luces de emergencia operativas",
+  senalizacion:    "Señalización de evacuación visible",
+  puertasElectricas:"Puertas eléctricas funcionando correctamente",
+  pisos:           "Pisos libres de obstáculos",
+  rutasEvacuacion: "Rutas de evacuación despejadas",
+  tanques:         "Acceso a tanques seguro",
+  filtraciones:    "Sin filtraciones o humedades visibles"
+};
+const CHECKLIST_EQUIPOS = {
+  extintor1:    "Extintor 1 — Vigente y presurizado",
+  extintor2:    "Extintor 2 — Vigente y presurizado",
+  extintor3:    "Extintor 3 — Vigente y presurizado",
+  extintor4:    "Extintor 4 — Vigente y presurizado",
+  manguera:     "Gabinete contra incendio — Manguera en buen estado",
+  valvula:      "Gabinete — Válvula operativa",
+  senalizacion: "Señalización equipos visible",
+  acceso:       "Acceso a equipos despejado"
+};
+
+// ─────────────────────────────────────────
+//  UTILIDADES
+// ─────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  const hoy = new Date();
+  document.getElementById("fechaElab").value =
+    `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}-${String(hoy.getDate()).padStart(2,"0")}`;
+  document.getElementById("selMes").value = String(hoy.getMonth());
+});
+
+function setStatus(msg, tipo = "info") {
+  const el = document.getElementById("statusBar");
+  el.innerHTML = msg;
+  el.className = tipo;
+  el.style.display = "block";
+}
+
+async function leerColeccion(ruta) {
+  try {
+    const snap = await db.ref(ruta).once("value");
+    if (!snap.exists()) return [];
+    return Object.values(snap.val());
+  } catch(e) {
+    console.warn("[Firebase] No se pudo leer", ruta, e.message);
+    return [];
+  }
+}
+
+async function leerColeccionUnificada(coleccion) {
+  return leerColeccion(`edificios/anim2/${coleccion}`);
+}
+
+function extraerFecha(obj) {
+  const c = obj.fecha || obj.fechaActividad || obj.date || "";
+  if (!c) return null;
+  try { const d = new Date(c + (c.length === 10 ? "T12:00:00" : "")); return isNaN(d) ? null : d; }
+  catch { return null; }
+}
+
+function filtrarPorMes(arr, mes, anio) {
+  return arr.filter(item => {
+    const f = extraerFecha(item);
+    if (!f) return false;
+    return f.getMonth() === mes && f.getFullYear() === anio;
+  });
+}
+
+// También filtra por campo "periodo" (ej. "Marzo 2026")
+function filtrarPorPeriodo(arr, mes, anio) {
+  const periodoStr = `${MESES[mes]} ${anio}`;
+  return arr.filter(item => {
+    // Primero intenta por fecha real
+    const f = extraerFecha(item);
+    if (f) return f.getMonth() === mes && f.getFullYear() === anio;
+    // Fallback por campo periodo
+    if (item.periodo) return item.periodo.includes(periodoStr) || item.periodo.includes(MESES[mes]);
+    return false;
+  });
+}
+
+function fmtFecha(obj) {
+  const f = extraerFecha(obj);
+  if (!f) return "Sin fecha";
+  return f.toLocaleDateString("es-CO", { day:"2-digit", month:"2-digit", year:"numeric" });
+}
+
+function calcProm(arr) {
+  const v = arr.map(i => parseFloat(i.cumplimiento || 0)).filter(v => v > 0);
+  if (!v.length) return null;
+  return Math.round(v.reduce((a,b)=>a+b,0)/v.length);
+}
+
+// ─────────────────────────────────────────
+//  ANÁLISIS DE INSPECCIONES (el núcleo)
+// ─────────────────────────────────────────
+function analizarInspecciones(inspecciones) {
+  const resultado = {
+    total: inspecciones.length,
+    locativas: [],
+    equipos: [],
+    especiales: [],
+    itemsFallidos: [],   // ítems del checklist que fallaron
+    itemsOK: [],         // ítems que pasaron
+    hallazgosTextos: [], // textos de hallazgos redactados
+    acciones: [],        // acciones correctivas
+    nivelesRiesgo: [],
+    estados: [],
+    cumplimientos: []
+  };
+
+  inspecciones.forEach(ins => {
+    const tipo = ins.tipoInspeccion || "mensual";
+    if (tipo === "mensual" || tipo === "especial") resultado.locativas.push(ins);
+    if (tipo === "trimestral" || tipo === "especial") resultado.equipos.push(ins);
+
+    // Cumplimiento
+    if (ins.cumplimiento) resultado.cumplimientos.push(ins.cumplimiento);
+
+    // Nivel de riesgo
+    if (ins.nivelRiesgo && ins.nivelRiesgo !== "Sin hallazgos")
+      resultado.nivelesRiesgo.push({ nivel: ins.nivelRiesgo, fecha: fmtFecha(ins) });
+
+    // Estado
+    if (ins.estado) resultado.estados.push(ins.estado);
+
+    // Hallazgos redactados
+    if (ins.hallazgos && ins.hallazgos.trim() && ins.hallazgos !== "Sin hallazgos")
+      resultado.hallazgosTextos.push({ texto: ins.hallazgos.trim(), fecha: fmtFecha(ins), nivel: ins.nivelRiesgo || "Sin nivel", tipo });
+
+    // Acciones correctivas
+    if (ins.accionesCorrectivas && ins.accionesCorrectivas.trim())
+      resultado.acciones.push(ins.accionesCorrectivas.trim());
+
+    // Solo analizar el checklist relevante según el tipo de inspección
+    const esEquipos = tipo === "trimestral";
+    const checklist = esEquipos ? ins.checklist_equipos : ins.checklist_locativa;
+    const dict      = esEquipos ? CHECKLIST_EQUIPOS     : CHECKLIST_LOCATIVA;
+    const prefix    = esEquipos ? "eq_"                 : "";
+
+    if (checklist) {
+      Object.entries(checklist).forEach(([key, val]) => {
+        if (!dict[key]) return; // ignorar claves numéricas u obsoletas
+        const label = dict[key];
+        const uid   = prefix + key;
+        if (val === true) {
+          if (!resultado.itemsOK.find(i => i.key === uid))
+            resultado.itemsOK.push({ key: uid, label });
+        } else {
+          if (!resultado.itemsFallidos.find(i => i.key === uid))
+            resultado.itemsFallidos.push({ key: uid, label });
+        }
+      });
+    }
+  });
+
+  resultado.cumplimientoPromedio = resultado.cumplimientos.length
+    ? Math.round(resultado.cumplimientos.reduce((a,b)=>a+b,0)/resultado.cumplimientos.length) : null;
+
+  // Nivel máximo de riesgo
+  const orden = { "Crítico":5, "Alto":4, "Medio":3, "Bajo":2, "Sin hallazgos":1 };
+  resultado.nivelMaximo = resultado.nivelesRiesgo.length
+    ? resultado.nivelesRiesgo.reduce((a,b) => (orden[a.nivel]||0) >= (orden[b.nivel]||0) ? a : b).nivel
+    : "Sin hallazgos";
+
+  return resultado;
+}
+
+// ─────────────────────────────────────────
+//  GENERAR TEXTOS AUTOMÁTICOS
+// ─────────────────────────────────────────
+async function generarTextos() {
+  const mesVal = document.getElementById("selMes").value;
+  const anio   = parseInt(document.getElementById("selAnio").value);
+  if (mesVal === "") { setStatus("⚠️ Seleccione el mes del informe.", "error"); return; }
+
+  const mes    = parseInt(mesVal);
+  const mesNom = MESES[mes];
+  const resp   = document.getElementById("responsable").value.trim() || "Carla Castellano Madriz";
+
+  const btn = document.getElementById("btnTextos");
+  btn.disabled = true; btn.innerHTML = "⏳ Cargando datos...";
+  setStatus("🔄 Leyendo datos de Firebase...", "info");
+
+  try {
+    const [supArr, insArr, indArr, mantArr] = await Promise.all([
+      leerColeccionUnificada("supervisiones"),
+      leerColeccionUnificada("inspecciones"),
+      leerColeccionUnificada("inducciones"),
+      leerColeccionUnificada("mantenimientos"),
+    ]);
+
+    const supMes  = filtrarPorMes(supArr, mes, anio);
+    const insMes  = filtrarPorPeriodo(insArr, mes, anio);
+    const indMes  = filtrarPorMes(indArr, mes, anio);
+    const mantMes = filtrarPorMes(mantArr, mes, anio);
+
+    console.log("[Datos mes]", mesNom, anio, "→ sup:", supMes.length,
+                "ins:", insMes.length, "ind:", indMes.length, "mant:", mantMes.length);
+
+    // Análisis profundo de inspecciones
+    const analInsp = analizarInspecciones(insMes);
+    const cumpSup  = calcProm(supMes);
+    const totalActs = supMes.length + insMes.length + indMes.length + mantMes.length;
+
+    // Cumplimiento combinado
+    const todosConCump = [...supMes, ...insMes].map(i => parseFloat(i.cumplimiento||0)).filter(v=>v>0);
+    const cumpTotal = todosConCump.length
+      ? Math.round(todosConCump.reduce((a,b)=>a+b,0)/todosConCump.length) : null;
+
+    // Actualizar estadísticas UI
+    document.getElementById("stSuper").textContent  = supMes.length;
+    document.getElementById("stInspec").textContent = insMes.length;
+    document.getElementById("stInduc").textContent  = indMes.length;
+    document.getElementById("stMant").textContent   = mantMes.length;
+    document.getElementById("stCump").textContent   = cumpTotal !== null ? cumpTotal+"%" : "N/A";
+    document.getElementById("stHallNeg").textContent = analInsp.hallazgosTextos.length;
+    document.getElementById("lblMesAnio").textContent = `${mesNom} ${anio}`;
+    document.getElementById("statsPreview").style.display = "block";
+
+    // Mostrar tags de hallazgos
+    const tagsDiv = document.getElementById("hallazgosTags");
+    tagsDiv.innerHTML = "";
+    if (analInsp.nivelesRiesgo.length > 0) {
+      document.getElementById("hallazgosDetalle").style.display = "block";
+      analInsp.nivelesRiesgo.forEach(h => {
+        const n = h.nivel.toLowerCase().replace("í","i");
+        const cls = n === "critico" ? "tag-critico" : n === "alto" ? "tag-alto"
+          : n === "medio" ? "tag-medio" : "tag-bajo";
+        tagsDiv.innerHTML += `<span class="hallazgo-tag ${cls}">${h.nivel} — ${h.fecha}</span>`;
+      });
+      analInsp.itemsFallidos.forEach(it => {
+        tagsDiv.innerHTML += `<span class="hallazgo-tag tag-medio">❌ ${it.label}</span>`;
+      });
+    } else if (insMes.length > 0) {
+      document.getElementById("hallazgosDetalle").style.display = "block";
+      tagsDiv.innerHTML = `<span class="hallazgo-tag tag-ok">✅ Sin hallazgos negativos en el período</span>`;
+    }
+
+    // ── Nivel descriptivo ──
+    const nivDesc = cumpTotal !== null
+      ? (cumpTotal >= 90 ? "satisfactorio" : cumpTotal >= 75 ? "aceptable" : "con oportunidades de mejora significativas")
+      : "en proceso de consolidación";
+
+    // ════════════════════════════════════
+    //  1. INTRODUCCIÓN
+    // ════════════════════════════════════
+    const intro = `El presente informe consolidado corresponde al período de ${mesNom} de ${anio} y ha sido elaborado en cumplimiento del Decreto 1072 de 2015 y la Resolución 0312 de 2019, normativas que regulan el Sistema de Gestión de Seguridad y Salud en el Trabajo (SG-SST) para la Torres de Anim II, ubicada en la ciudad de Bogotá, Colombia.
+
+El SG-SST de la Torres de Anim II tiene como objetivo identificar, evaluar, prevenir y controlar los riesgos laborales que puedan afectar la seguridad y salud de los trabajadores, contratistas y visitantes del edificio, promoviendo condiciones de trabajo seguras en cumplimiento de la normatividad colombiana vigente.
+
+Durante ${mesNom} de ${anio} se ejecutaron un total de ${totalActs} actividades del SG-SST: ${supMes.length} supervisión(es) de seguridad, ${insMes.length} inspección(es) de instalaciones${insMes.length > 0 ? ` (${analInsp.locativas.length} locativa(s) y ${analInsp.equipos.length} de equipos contra incendio)` : ""}, ${indMes.length} capacitación(es) e inducción(es) al personal, y ${mantMes.length} actividad(es) de mantenimiento. El desempeño general del período se califica como ${nivDesc}.`;
+
+    document.getElementById("txtIntro").value = intro;
+
+    // ════════════════════════════════════
+    //  2. ANÁLISIS DE ACTIVIDADES (basado en datos reales)
+    // ════════════════════════════════════
+    let analisis = `ANÁLISIS DE ACTIVIDADES — ${mesNom.toUpperCase()} ${anio}\n\n`;
+
+    // Supervisiones
+    analisis += `1. SUPERVISIONES DE SEGURIDAD (${supMes.length} realizadas)\n`;
+    if (supMes.length > 0) {
+      supMes.forEach((s, i) => {
+        const areas  = Array.isArray(s.areas) ? s.areas.join(", ") : (s.areas || "áreas generales");
+        const hallPos = Array.isArray(s.hallazgosPositivos) ? s.hallazgosPositivos.map(h=>h.texto||h).join("; ") : "";
+        const hallNeg = Array.isArray(s.hallazgosNegativos) ? s.hallazgosNegativos.map(h=>h.descripcion||h.texto||h).join("; ") : "";
+        analisis += `  ${i+1}. Supervisión del ${fmtFecha(s)} — Áreas revisadas: ${areas}.\n`;
+        if (hallPos) analisis += `     Aspectos positivos: ${hallPos}.\n`;
+        if (hallNeg) analisis += `     Hallazgos de mejora: ${hallNeg}.\n`;
+        analisis += "\n";
+      });
+    } else analisis += `  No se registraron supervisiones en este período.\n\n`;
+
+    // Inspecciones (análisis profundo)
+    analisis += `2. INSPECCIONES DE INSTALACIONES (${insMes.length} realizadas)\n`;
+    if (insMes.length > 0) {
+      insMes.forEach((ins, i) => {
+        const tipoLabel = ins.tipoInspeccion === "mensual" ? "Locativa Mensual"
+          : ins.tipoInspeccion === "trimestral" ? "Equipos Contra Incendio (Trimestral)"
+          : ins.tipoInspeccion === "especial" ? "Especial" : ins.tipoInspeccion || "General";
+        analisis += `  ${i+1}. Inspección ${tipoLabel} — ${fmtFecha(ins)}\n`;
+        analisis += `     Cumplimiento checklist: ${ins.cumplimiento || "N/R"}%\n`;
+        analisis += `     Nivel de riesgo: ${ins.nivelRiesgo || "Sin hallazgos"}\n`;
+        analisis += `     Estado: ${ins.estado || "N/R"}\n`;
+
+        // Detallar checklist
+        if (ins.checklist_locativa) {
+          const ok  = Object.entries(ins.checklist_locativa).filter(([,v])=>v===true).map(([k])=>CHECKLIST_LOCATIVA[k]||k);
+          const nok = Object.entries(ins.checklist_locativa).filter(([,v])=>v!==true).map(([k])=>CHECKLIST_LOCATIVA[k]||k);
+          if (ok.length)  analisis += `     ✅ Conforme: ${ok.join(", ")}.\n`;
+          if (nok.length) analisis += `     ❌ No conforme: ${nok.join(", ")}.\n`;
+        }
+        if (ins.checklist_equipos) {
+          const ok  = Object.entries(ins.checklist_equipos).filter(([,v])=>v===true).map(([k])=>CHECKLIST_EQUIPOS[k]||k);
+          const nok = Object.entries(ins.checklist_equipos).filter(([,v])=>v!==true).map(([k])=>CHECKLIST_EQUIPOS[k]||k);
+          if (ok.length)  analisis += `     ✅ Equipos conformes: ${ok.join(", ")}.\n`;
+          if (nok.length) analisis += `     ❌ Equipos no conformes: ${nok.join(", ")}.\n`;
+        }
+        if (ins.hallazgos && ins.hallazgos !== "Sin hallazgos")
+          analisis += `     Hallazgos: ${ins.hallazgos}\n`;
+        if (ins.accionesCorrectivas)
+          analisis += `     Acciones correctivas: ${ins.accionesCorrectivas}\n`;
+        analisis += "\n";
+      });
+    } else analisis += `  No se registraron inspecciones en este período.\n\n`;
+
+    // Capacitaciones
+    analisis += `3. CAPACITACIONES E INDUCCIONES (${indMes.length} realizadas)\n`;
+    if (indMes.length > 0) {
+      indMes.forEach((s, i) => {
+        const tema  = s.tema || s.temaCapacitacion || s.titulo || "Tema SST";
+        const asist = s.asistentes || s.numeroAsistentes || s.participantes || "N/R";
+        analisis += `  ${i+1}. ${fmtFecha(s)} — Tema: "${tema}". Asistentes: ${asist}.\n`;
+      });
+    } else analisis += `  No se registraron capacitaciones en este período.\n`;
+
+    analisis += `\n4. MANTENIMIENTOS (${mantMes.length} realizados)\n`;
+    if (mantMes.length > 0) {
+      mantMes.forEach((s, i) => {
+        const desc = s.descripcion || s.actividad || s.tipo || "Mantenimiento general";
+        analisis += `  ${i+1}. ${fmtFecha(s)}: ${desc}.\n`;
+      });
+    } else analisis += `  No se registraron mantenimientos en este período.\n`;
+
+    document.getElementById("txtAnalisis").value = analisis;
+
+    // ════════════════════════════════════
+    //  3. HALLAZGOS (basado en datos reales de inspecciones)
+    // ════════════════════════════════════
+    let hallazgos = "";
+
+    if (insMes.length === 0) {
+      hallazgos = `Durante el mes de ${mesNom} de ${anio} no se registraron inspecciones formales en el sistema. Se recomienda verificar que los registros de inspección del período hayan sido cargados correctamente en el módulo correspondiente del SG-SST.`;
+    } else if (analInsp.hallazgosTextos.length === 0 && analInsp.itemsFallidos.length === 0) {
+      // Sin hallazgos negativos
+      hallazgos = `Durante el mes de ${mesNom} de ${anio}, las inspecciones realizadas reportaron un estado CONFORME en todos los ítems evaluados. No se identificaron hallazgos negativos, condiciones inseguras ni incumplimientos en las áreas inspeccionadas del edificio Torres de Anim II.\n\n`;
+      hallazgos += `ASPECTOS POSITIVOS IDENTIFICADOS:\n`;
+      if (analInsp.itemsOK.length > 0) {
+        analInsp.itemsOK.forEach(it => { hallazgos += `• ${it.label}: Conforme.\n`; });
+      } else {
+        hallazgos += `• Todas las áreas y equipos inspeccionados se encuentran en condiciones óptimas de seguridad.\n`;
+      }
+      hallazgos += `\nNo se reportaron accidentes de trabajo, incidentes ni enfermedades laborales durante el período evaluado, lo que refleja la efectividad de las medidas preventivas implementadas en el SG-SST de la Torres de Anim II.`;
+    } else {
+      // Con hallazgos — usar datos reales
+      const nivelMax = analInsp.nivelMaximo;
+      hallazgos = `Durante el mes de ${mesNom} de ${anio}, las inspecciones de instalaciones identificaron ${analInsp.hallazgosTextos.length > 0 ? "los siguientes hallazgos" : "condiciones de mejora"} con nivel de riesgo máximo: ${nivelMax}.\n\n`;
+
+      if (analInsp.hallazgosTextos.length > 0) {
+        hallazgos += `HALLAZGOS IDENTIFICADOS:\n`;
+        analInsp.hallazgosTextos.forEach((h, i) => {
+          hallazgos += `\n${i+1}. [${h.tipo === "mensual" ? "Inspección Locativa" : h.tipo === "trimestral" ? "Equipos Contra Incendio" : "Inspección Especial"} — ${h.fecha}]\n`;
+          hallazgos += `   Nivel de riesgo: ${h.nivel}\n`;
+          hallazgos += `   Descripción: ${h.texto}\n`;
+        });
+      }
+
+      if (analInsp.itemsFallidos.length > 0) {
+        hallazgos += `\nÍTEMS DE CHECKLIST NO CONFORMES:\n`;
+        analInsp.itemsFallidos.forEach(it => { hallazgos += `• ❌ ${it.label}\n`; });
+      }
+
+      if (analInsp.acciones.length > 0) {
+        hallazgos += `\nACCIONES CORRECTIVAS PROPUESTAS:\n`;
+        analInsp.acciones.forEach((ac, i) => { hallazgos += `${i+1}. ${ac}\n`; });
+      }
+
+      hallazgos += `\nNo se reportaron accidentes de trabajo ni enfermedades laborales durante el período. Se establece seguimiento a los hallazgos identificados para garantizar el cierre oportuno de las acciones correctivas.`;
+    }
+
+    document.getElementById("txtHallazgos").value = hallazgos;
+
+    // ════════════════════════════════════
+    //  4. CONCLUSIONES
+    // ════════════════════════════════════
+    const cumpTexto = cumpTotal !== null ? `${cumpTotal}%` : "en evaluación";
+    const conclusiones = `Con base en las actividades desarrolladas durante el mes de ${mesNom} de ${anio}, se presentan las siguientes conclusiones:\n\n• El SG-SST de la Torres de Anim II registró un cumplimiento de ${cumpTexto} en el período, con un total de ${totalActs} actividades ejecutadas conforme al Plan Anual SST 2026.\n\n• Las ${insMes.length} inspección(es) de instalaciones realizadas permitieron verificar las condiciones de seguridad del edificio. ${analInsp.itemsFallidos.length > 0 ? `Se identificaron ${analInsp.itemsFallidos.length} ítem(s) no conforme(s) que requieren acciones correctivas: ${analInsp.itemsFallidos.map(i=>i.label).join(", ")}.` : "Todos los ítems del checklist se encontraron conformes."}\n\n• Las ${supMes.length} supervisión(es) de seguridad ejecutadas contribuyeron a la identificación temprana de condiciones de riesgo y al monitoreo continuo de las áreas de trabajo, promoviendo ambientes laborales seguros para todos los colaboradores del edificio.\n\n• Las ${indMes.length} capacitación(es) realizadas fortalecieron la cultura de prevención y el conocimiento del personal frente a los procedimientos de seguridad y emergencias establecidos en el SG-SST.`;
+
+    document.getElementById("txtConclusiones").value = conclusiones;
+
+    // ════════════════════════════════════
+    //  5. RECOMENDACIONES (basadas en hallazgos reales)
+    // ════════════════════════════════════
+    let recomendaciones = `Con el propósito de fortalecer el SG-SST de la Torres de Anim II, se presentan las siguientes recomendaciones para el período de ${MESES[(mes+1)%12]} de ${mes===11 ? anio+1 : anio}:\n\n`;
+
+    // Recomendaciones específicas según hallazgos
+    if (analInsp.itemsFallidos.length > 0) {
+      recomendaciones += `• Priorizar el cierre de las no conformidades identificadas en las inspecciones de ${mesNom}: ${analInsp.itemsFallidos.map(i=>i.label).join("; ")}. Establecer responsables y fechas límite para la implementación de medidas correctivas.\n\n`;
+    }
+    if (analInsp.nivelMaximo === "Crítico" || analInsp.nivelMaximo === "Alto") {
+      recomendaciones += `• Atender con carácter urgente los hallazgos de nivel "${analInsp.nivelMaximo}" identificados en el período. Estos riesgos requieren intervención inmediata para prevenir accidentes o incidentes de trabajo.\n\n`;
+    }
+    if (analInsp.acciones.length > 0) {
+      recomendaciones += `• Dar seguimiento y verificar el cumplimiento de las acciones correctivas propuestas en las inspecciones: ${analInsp.acciones.slice(0,2).join(". ")}.\n\n`;
+    }
+
+    recomendaciones += `• Mantener la frecuencia de inspecciones locativas mensuales y de equipos contra incendio de manera trimestral, garantizando el registro oportuno de cada actividad en el sistema de información del SG-SST.\n\n`;
+    recomendaciones += `• Reforzar el programa de capacitaciones con temáticas prioritarias identificadas en la matriz de riesgos, priorizando primeros auxilios básicos, uso de extintores y procedimientos de evacuación.\n\n`;
+    recomendaciones += `• Actualizar la Matriz de Identificación de Peligros, Evaluación y Valoración de Riesgos (IPEVR) incorporando las novedades identificadas en el presente período.\n\n`;
+    recomendaciones += `• Continuar con la ejecución del Plan Anual SST 2026, dando seguimiento mensual al cronograma y asegurando los recursos necesarios para el cumplimiento de los objetivos establecidos.`;
+
+    document.getElementById("txtRecomendaciones").value = recomendaciones;
+
+    setStatus(`✅ Textos generados para <strong>${mesNom} ${anio}</strong> — ${totalActs} actividades encontradas, ${insMes.length} inspección(es) analizada(s), ${analInsp.hallazgosTextos.length} hallazgo(s) identificado(s). Puede editar los textos antes de generar el PDF.`, "success");
+
+  } catch(err) {
+    console.error("[Error] generarTextos:", err);
+    setStatus("❌ Error al cargar datos: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🤖 Generar Textos Automáticos";
+  }
+}
+
+// ─────────────────────────────────────────
+//  GUARDAR INFORME EN FIREBASE
+// ─────────────────────────────────────────
+async function guardarEnFirebase() {
+  const mesVal = document.getElementById("selMes").value;
+  const anio   = parseInt(document.getElementById("selAnio").value);
+  const resp   = document.getElementById("responsable").value.trim();
+  const fechaEl = document.getElementById("fechaElab").value;
+
+  const textos = {
+    introduccion:     document.getElementById("txtIntro").value.trim(),
+    analisis:         document.getElementById("txtAnalisis").value.trim(),
+    hallazgos:        document.getElementById("txtHallazgos").value.trim(),
+    conclusiones:     document.getElementById("txtConclusiones").value.trim(),
+    recomendaciones:  document.getElementById("txtRecomendaciones").value.trim()
+  };
+
+  const mes    = parseInt(mesVal);
+  const mesNom = MESES[mes];
+  const informeId = `informe-${mesNom.toLowerCase()}-${anio}-${Date.now()}`;
+
+  const datos = {
+    id:              informeId,
+    mes:             mesNom,
+    mesNumero:       mes,
+    anio:            anio,
+    periodo:         `${mesNom} ${anio}`,
+    fechaElaboracion: fechaEl,
+    responsable:     resp,
+    textos:          textos,
+    edificio:        "Torres de Anim II",
+    estado:          "Generado",
+    timestamp:       Date.now(),
+    fechaCreacion:   new Date().toISOString()
+  };
+
+  console.log("[Firebase] Guardando informe:", informeId);
+  await db.ref(`edificios/anim2/informes/${informeId}`).set(datos);
+  console.log("[Firebase] Informe guardado OK:", informeId);
+  return informeId;
+}
+
+// ─────────────────────────────────────────
+//  VALIDACIONES
+// ─────────────────────────────────────────
+function validarFormulario() {
+  const mesVal = document.getElementById("selMes").value;
+  if (mesVal === "") { setStatus("⚠️ Seleccione el mes del informe.", "error"); return false; }
+
+  const campos = [
+    { id:"txtIntro",          label:"Introducción" },
+    { id:"txtAnalisis",       label:"Análisis de Actividades" },
+    { id:"txtHallazgos",      label:"Hallazgos y Observaciones" },
+    { id:"txtConclusiones",   label:"Conclusiones" },
+    { id:"txtRecomendaciones",label:"Recomendaciones" },
+  ];
+  for (const c of campos) {
+    if (!document.getElementById(c.id).value.trim()) {
+      setStatus(`⚠️ El campo "${c.label}" está vacío. Use "Generar Textos Automáticos" o complete manualmente.`, "error");
+      return false;
+    }
+  }
+  return true;
+}
+
+// ─────────────────────────────────────────
+//  SÓLO GUARDAR FIREBASE
+// ─────────────────────────────────────────
+async function soloGuardarFirebase() {
+  if (!validarFormulario()) return;
+  const btn = document.getElementById("btnSolo");
+  btn.disabled = true; btn.innerHTML = "⏳ Guardando...";
+  setStatus("🔄 Guardando informe en Firebase...", "info");
+  try {
+    const id = await guardarEnFirebase();
+    setStatus(`✅ Informe guardado en Firebase con ID: <strong>${id}</strong>`, "success");
+  } catch(err) {
+    console.error("[Error] guardar Firebase:", err);
+    setStatus("❌ Error al guardar en Firebase: " + err.message, "error");
+  } finally {
+    btn.disabled = false; btn.innerHTML = "☁️ Solo Guardar en Firebase";
+  }
+}
+
+// ─────────────────────────────────────────
+//  SÓLO GENERAR PDF
+// ─────────────────────────────────────────
+async function soloGenerarPDF() {
+  if (!validarFormulario()) return;
+  const btn = document.getElementById("btnPDF");
+  btn.disabled = true; btn.innerHTML = "⏳ Generando PDF...";
+  setStatus("🔄 Construyendo PDF nativo...", "info");
+  try {
+    await construirPDF();
+    setStatus("✅ PDF generado y descargado correctamente.", "success");
+  } catch(err) {
+    console.error("[Error] PDF:", err);
+    setStatus("❌ Error al generar PDF: " + err.message, "error");
+  } finally {
+    btn.disabled = false; btn.innerHTML = "📄 Solo Generar PDF";
+  }
+}
+
+// ─────────────────────────────────────────
+//  GUARDAR + PDF (botón principal)
+// ─────────────────────────────────────────
+async function guardarYGenerarPDF() {
+  if (!validarFormulario()) return;
+  const btn = document.getElementById("btnTodo");
+  btn.disabled = true; btn.innerHTML = "⏳ Procesando...";
+  setStatus("🔄 Guardando en Firebase y generando PDF...", "info");
+  try {
+    // 1) Guardar en Firebase
+    setStatus("🔄 Guardando informe en Firebase...", "info");
+    const id = await guardarEnFirebase();
+
+    // 2) Generar PDF
+    setStatus("🔄 Generando PDF completo...", "info");
+    const nombrePDF = await construirPDF();
+
+    setStatus(`✅ Informe guardado en Firebase (ID: <strong>${id}</strong>) y PDF descargado: <strong>${nombrePDF}</strong>`, "success");
+  } catch(err) {
+    console.error("[Error] guardarYGenerarPDF:", err);
+    setStatus("❌ Error: " + err.message, "error");
+  } finally {
+    btn.disabled = false; btn.innerHTML = "💾📄 Guardar en Firebase y Generar PDF";
+  }
+}
+
+// ─────────────────────────────────────────
+//  CONSTRUIR PDF (jsPDF nativo, sin html2canvas)
+// ─────────────────────────────────────────
+async function construirPDF() {
+  const mesVal  = document.getElementById("selMes").value;
+  const anio    = parseInt(document.getElementById("selAnio").value);
+  const fechaEl = document.getElementById("fechaElab").value;
+  const resp    = document.getElementById("responsable").value.trim() || "Carla Castellano Madriz";
+  const mes     = parseInt(mesVal);
+  const mesNom  = MESES[mes];
+
+  const intro  = document.getElementById("txtIntro").value.trim();
+  const analis = document.getElementById("txtAnalisis").value.trim();
+  const hall   = document.getElementById("txtHallazgos").value.trim();
+  const conc   = document.getElementById("txtConclusiones").value.trim();
+  const recom  = document.getElementById("txtRecomendaciones").value.trim();
+
+  let fechaTexto = "Sin fecha";
+  if (fechaEl) {
+    const fo = new Date(fechaEl + "T12:00:00");
+    fechaTexto = fo.toLocaleDateString("es-CO", { day:"2-digit", month:"long", year:"numeric" });
+  }
+
+  // Cargar datos para tablas desde Firebase
+  const [supArr, insArr, indArr, mantArr] = await Promise.all([
+    leerColeccionUnificada("supervisiones"),
+    leerColeccionUnificada("inspecciones"),
+    leerColeccionUnificada("inducciones"),
+    leerColeccionUnificada("mantenimientos"),
+  ]);
+  const supMes  = filtrarPorMes(supArr, mes, anio);
+  const insMes  = filtrarPorPeriodo(insArr, mes, anio);
+  const indMes  = filtrarPorMes(indArr, mes, anio);
+  const mantMes = filtrarPorMes(mantArr, mes, anio);
+  const analInsp = analizarInspecciones(insMes);
+  const totalActs = supMes.length + insMes.length + indMes.length + mantMes.length;
+  const todosConCump = [...supMes,...insMes].map(i=>parseFloat(i.cumplimiento||0)).filter(v=>v>0);
+  const cumpTotal = todosConCump.length
+    ? Math.round(todosConCump.reduce((a,b)=>a+b,0)/todosConCump.length) : null;
+
+  // ── jsPDF ──
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"letter" });
+
+  const PW   = doc.internal.pageSize.getWidth();
+  const PH   = doc.internal.pageSize.getHeight();
+  const MRG  = 20;
+  const CTW  = PW - MRG*2;
+
+  const C_AZUL  = [31, 78, 120];
+  const C_MED   = [37, 99, 235];
+  const C_GRIS  = [241, 245, 249];
+  const C_TEXT  = [71, 85, 105];
+  const C_NEGRO = [30, 41, 59];
+  const C_BLANC = [255, 255, 255];
+  const C_AMAR  = [254, 243, 199];
+  const C_ROJO  = [254, 226, 226];
+
+  // ── Pie de página ──
+  function addFooters() {
+    const total = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= total; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(200,210,220); doc.setLineWidth(.3);
+      doc.line(MRG, PH-14, PW-MRG, PH-14);
+      doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(...C_TEXT);
+      doc.text("SG-SST · Torres de Anim II · Bogotá, Colombia", MRG, PH-9);
+      doc.text(`Página ${i} de ${total}`, PW-MRG, PH-9, { align:"right" });
+    }
+  }
+
+  // ── Título de sección ──
+  function secTitulo(titulo, y) {
+    if (y > PH-50) { doc.addPage(); y = MRG+10; }
+    doc.setFillColor(...C_AZUL);
+    doc.roundedRect(MRG, y-5, CTW, 9, 1, 1, "F");
+    doc.setFont("helvetica","bold"); doc.setFontSize(10.5); doc.setTextColor(...C_BLANC);
+    doc.text(titulo, MRG+5, y+1);
+    doc.setTextColor(...C_NEGRO);
+    return y+12;
+  }
+
+  function subTitulo(titulo, y) {
+    if (y > PH-40) { doc.addPage(); y = MRG+10; }
+    doc.setFont("helvetica","bold"); doc.setFontSize(9.5); doc.setTextColor(...C_MED);
+    doc.text(titulo, MRG, y);
+    doc.setTextColor(...C_NEGRO);
+    return y+6;
+  }
+
+  // Añadir bloque de texto respetando \n y con salto automático de página
+  function addParrafos(texto, y, fontSize=9.5) {
+    doc.setFont("helvetica","normal"); doc.setFontSize(fontSize); doc.setTextColor(...C_NEGRO);
+    const parrafos = texto.split("\n");
+    for (const p of parrafos) {
+      if (!p.trim()) { y += 3.5; continue; }
+      const lines = doc.splitTextToSize(p, CTW);
+      for (const ln of lines) {
+        if (y > PH-22) { doc.addPage(); y = MRG+10; }
+        doc.text(ln, MRG, y); y += 5;
+      }
+    }
+    return y + 4;
+  }
+
+  // ════════════════════════════════════════
+  //  PÁGINA 1: PORTADA
+  // ════════════════════════════════════════
+  doc.setFillColor(...C_AZUL);
+  doc.rect(0, 0, PW, 60, "F");
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(19); doc.setTextColor(...C_BLANC);
+  doc.text("INFORME CONSOLIDADO MENSUAL", PW/2, 22, { align:"center" });
+  doc.setFontSize(12);
+  doc.text("SISTEMA DE GESTIÓN DE SEGURIDAD Y SALUD EN EL TRABAJO", PW/2, 33, { align:"center" });
+  doc.setFontSize(11); doc.setTextColor(186,230,253);
+  doc.text("Torres de Anim II · Bogotá, Colombia", PW/2, 44, { align:"center" });
+  doc.setFontSize(10); doc.setTextColor(...C_BLANC);
+  doc.text(`Período: ${mesNom} ${anio}`, PW/2, 54, { align:"center" });
+
+  doc.setFillColor(...C_MED);
+  doc.rect(0, PH-22, PW, 22, "F");
+  doc.setFont("helvetica","italic"); doc.setFontSize(8); doc.setTextColor(...C_BLANC);
+  doc.text("Documento de uso interno — Elaborado en cumplimiento del Decreto 1072/2015 y Resolución 0312/2019", PW/2, PH-9, { align:"center" });
+
+  doc.autoTable({
+    startY: 72,
+    margin: { left: MRG+25, right: MRG+25 },
+    head: [["Campo", "Información"]],
+    body: [
+      ["Edificio",              "Torres de Anim II"],
+      ["Período",               `${mesNom} de ${anio}`],
+      ["Fecha de Elaboración",  fechaTexto],
+      ["Responsable SST",       resp],
+      ["Cargo",                 "Coordinadora SG-SST"],
+      ["Cédula de Extranjería", "679955"],
+      ["Marco normativo",       "Decreto 1072/2015 · Res. 0312/2019"],
+      ["Total Actividades",     String(totalActs)],
+      ["Cumplimiento Promedio", cumpTotal !== null ? cumpTotal+"%" : "En evaluación"],
+      ["Accidentes de Trabajo", "0 (ninguno reportado)"],
+    ],
+    headStyles: { fillColor: C_AZUL, textColor: C_BLANC, fontStyle:"bold", fontSize:9.5, halign:"center" },
+    columnStyles: {
+      0: { fontStyle:"bold", textColor: C_AZUL, cellWidth:55 },
+      1: { textColor: C_NEGRO },
+    },
+    bodyStyles: { fontSize:9.5, cellPadding:5 },
+    alternateRowStyles: { fillColor: C_GRIS },
+    theme:"grid",
+  });
+
+  // ════════════════════════════════════════
+  //  PÁGINA 2: RESUMEN EJECUTIVO + INDICADORES
+  // ════════════════════════════════════════
+  doc.addPage();
+  let y = MRG+10;
+
+  y = secTitulo("1. RESUMEN EJECUTIVO", y);
+  const resumen = `El presente informe consolida las actividades del SG-SST de la Torres de Anim II durante ${mesNom} de ${anio}. Se ejecutaron ${totalActs} actividades: ${supMes.length} supervisión(es), ${insMes.length} inspección(es) de instalaciones, ${indMes.length} capacitación(es) y ${mantMes.length} mantenimiento(s). ${cumpTotal !== null ? `El cumplimiento promedio fue del ${cumpTotal}%.` : ""} No se reportaron accidentes de trabajo ni enfermedades laborales. ${analInsp.hallazgosTextos.length > 0 ? `Se identificaron ${analInsp.hallazgosTextos.length} hallazgo(s) con nivel máximo de riesgo "${analInsp.nivelMaximo}".` : "Todas las inspecciones reportaron condiciones conformes."}`;
+  y = addParrafos(resumen, y);
+  y += 4;
+
+  y = secTitulo("2. INDICADORES DEL PERÍODO", y);
+  const filasInd = [
+    ["Supervisiones realizadas",          String(supMes.length),          supMes.length>0 ? "OK - Ejecutado":"Sin registro"],
+    ["Inspecciones realizadas",           String(insMes.length),          insMes.length>0 ? "OK - Ejecutado":"Sin registro"],
+    ["  - Locativas",                     String(analInsp.locativas.length), ""],
+    ["  - Equipos contra incendio",       String(analInsp.equipos.length), ""],
+    ["Capacitaciones e inducciones",      String(indMes.length),          indMes.length>0 ? "OK - Ejecutado":"Sin registro"],
+    ["Mantenimientos",                    String(mantMes.length),         mantMes.length>0 ? "OK - Ejecutado":"Sin registro"],
+    ["Items checklist NO conformes",      String(analInsp.itemsFallidos.length), analInsp.itemsFallidos.length===0 ? "OK - Sin hallazgos":"PENDIENTE - Requiere accion"],
+    ["Nivel maximo de riesgo detectado",  analInsp.nivelMaximo,           analInsp.nivelMaximo==="Sin hallazgos"?"OK - Sin riesgo":"Ver hallazgos"],
+    ["Accidentes de trabajo",             "0",                            "OK - Sin novedad"],
+    ["Incidentes reportados",             "0",                            "OK - Sin novedad"],
+    ["Cumplimiento promedio general",     cumpTotal!==null?cumpTotal+"%":"N/A", cumpTotal!==null?(cumpTotal>=90?"Satisfactorio":cumpTotal>=75?"Aceptable":"Requiere mejora"):"En evaluacion"],
+  ];
+  doc.autoTable({
+    startY: y,
+    margin: { left:MRG, right:MRG },
+    head: [["Indicador","Valor","Estado"]],
+    body: filasInd,
+    headStyles: { fillColor: C_AZUL, textColor: C_BLANC, fontStyle:"bold", halign:"center", fontSize:9.5 },
+    columnStyles: {
+      0: { fontStyle:"bold", textColor: C_AZUL },
+      1: { halign:"center" },
+      2: { halign:"center" },
+    },
+    bodyStyles: { fontSize:9, cellPadding:4.5 },
+    alternateRowStyles: { fillColor: C_GRIS },
+    theme:"grid",
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  // ════════════════════════════════════════
+  //  ACTIVIDADES — SUPERVISIONES
+  // ════════════════════════════════════════
+  if (y > PH-60) { doc.addPage(); y = MRG+10; }
+  y = secTitulo("3. ACTIVIDADES REALIZADAS", y);
+  y = subTitulo("3.1 Supervisiones de Seguridad", y);
+
+  if (supMes.length > 0) {
+    doc.autoTable({
+      startY: y,
+      margin: { left:MRG, right:MRG },
+      head: [["Fecha","Áreas Inspeccionadas","Hallazgos Positivos","Hallazgos de Mejora"]],
+      body: supMes.map(s => [
+        fmtFecha(s),
+        Array.isArray(s.areas) ? s.areas.join(", ") : (s.areas || "General"),
+        Array.isArray(s.hallazgosPositivos) ? s.hallazgosPositivos.map(h=>h.texto||h).join("; ") : (s.hallazgosPositivos || "—"),
+        Array.isArray(s.hallazgosNegativos) ? s.hallazgosNegativos.map(h=>h.descripcion||h.texto||h).join("; ") : (s.hallazgosNegativos || "Sin hallazgos"),
+      ]),
+      headStyles: { fillColor: C_MED, textColor: C_BLANC, fontStyle:"bold", fontSize:8.5 },
+      bodyStyles: { fontSize:8.5, cellPadding:4 },
+      columnStyles: { 0:{cellWidth:24}, 1:{cellWidth:36}, 2:{cellWidth:60}, 3:{cellWidth:56} },
+      alternateRowStyles: { fillColor: C_GRIS },
+      theme:"grid",
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  } else {
+    doc.setFont("helvetica","italic"); doc.setFontSize(9); doc.setTextColor(...C_TEXT);
+    doc.text("No se registraron supervisiones en este período.", MRG+4, y); y += 12;
+  }
+
+  // ── INSPECCIONES ──
+  if (y > PH-60) { doc.addPage(); y = MRG+10; }
+  y = subTitulo("3.2 Inspecciones de Instalaciones", y);
+
+  if (insMes.length > 0) {
+    doc.autoTable({
+      startY: y,
+      margin: { left:MRG, right:MRG },
+      head: [["Fecha","Tipo","Cumplimiento","Nivel Riesgo","Estado","Hallazgos"]],
+      body: insMes.map(ins => {
+        const tipoLabel = ins.tipoInspeccion==="mensual"?"Locativa":ins.tipoInspeccion==="trimestral"?"Equipos CI":ins.tipoInspeccion||"General";
+        return [
+          fmtFecha(ins),
+          tipoLabel,
+          (ins.cumplimiento||"N/R") + (ins.cumplimiento?"%":""),
+          ins.nivelRiesgo || "Sin hallazgos",
+          ins.estado || "N/R",
+          ins.hallazgos || "Sin hallazgos",
+        ];
+      }),
+      headStyles: { fillColor: C_MED, textColor: C_BLANC, fontStyle:"bold", fontSize:8.5 },
+      bodyStyles: { fontSize:8, cellPadding:3.5 },
+      columnStyles: {
+        0:{cellWidth:22}, 1:{cellWidth:22}, 2:{cellWidth:20,halign:"center"},
+        3:{cellWidth:24}, 4:{cellWidth:26}, 5:{cellWidth:62},
+      },
+      alternateRowStyles: { fillColor: C_GRIS },
+      theme:"grid",
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  } else {
+    doc.setFont("helvetica","italic"); doc.setFontSize(9); doc.setTextColor(...C_TEXT);
+    doc.text("No se registraron inspecciones en este período.", MRG+4, y); y += 12;
+  }
+
+  // ── CHECKLIST DETALLE (si hay inspecciones) ──
+  if (insMes.length > 0) {
+    if (y > PH-60) { doc.addPage(); y = MRG+10; }
+    y = subTitulo("3.2.1 Detalle Checklist de Inspecciones", y);
+
+    const checkBody = [];
+    insMes.forEach(ins => {
+      const tipo = ins.tipoInspeccion || "mensual";
+      const checklist = tipo === "trimestral" ? (ins.checklist_equipos||{}) : (ins.checklist_locativa||{});
+      const map = tipo === "trimestral" ? CHECKLIST_EQUIPOS : CHECKLIST_LOCATIVA;
+      const fecha = fmtFecha(ins);
+      Object.entries(map).forEach(([key, label]) => {
+        const val = checklist[key];
+        checkBody.push([
+          fecha,
+          tipo === "trimestral" ? "Equipos CI" : "Locativa",
+          label,
+          val === true ? "Conforme" : val === false ? "No conforme" : "N/E"
+        ]);
+      });
+    });
+
+    doc.autoTable({
+      startY: y,
+      margin: { left:MRG, right:MRG },
+      head: [["Fecha","Tipo","Ítem Checklist","Resultado"]],
+      body: checkBody,
+      headStyles: { fillColor: C_MED, textColor: C_BLANC, fontStyle:"bold", fontSize:8 },
+      bodyStyles: { fontSize:7.5, cellPadding:3 },
+      columnStyles: { 0:{cellWidth:22}, 1:{cellWidth:18}, 2:{cellWidth:120}, 3:{cellWidth:16, halign:"center"} },
+      alternateRowStyles: { fillColor: C_GRIS },
+      didParseCell: function(data) {
+        if (data.column.index === 3 && data.section === "body") {
+          const v = String(data.cell.raw||"");
+          if (v.includes("No conforme")) { data.cell.styles.textColor = [185,28,28]; data.cell.styles.fontStyle = "bold"; }
+          else if (v.includes("Conforme")) { data.cell.styles.textColor = [22,101,52]; }
+        }
+      },
+      theme:"grid",
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  // ── CAPACITACIONES ──
+  if (y > PH-60) { doc.addPage(); y = MRG+10; }
+  y = subTitulo("3.3 Capacitaciones e Inducciones", y);
+  if (indMes.length > 0) {
+    doc.autoTable({
+      startY: y, margin: { left:MRG, right:MRG },
+      head: [["Fecha","Tema","Asistentes","Duración"]],
+      body: indMes.map(s => [
+        fmtFecha(s),
+        s.tema || s.temaCapacitacion || s.titulo || "Tema SST",
+        String(s.asistentes || s.numeroAsistentes || s.participantes || "N/R"),
+        String(s.duracion || s.horas || "N/R"),
+      ]),
+      headStyles: { fillColor: C_MED, textColor: C_BLANC, fontStyle:"bold", fontSize:9 },
+      bodyStyles: { fontSize:9, cellPadding:4 },
+      columnStyles: { 0:{cellWidth:28}, 1:{cellWidth:100}, 2:{cellWidth:24,halign:"center"}, 3:{cellWidth:24,halign:"center"} },
+      alternateRowStyles: { fillColor: C_GRIS }, theme:"grid",
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  } else {
+    doc.setFont("helvetica","italic"); doc.setFontSize(9); doc.setTextColor(...C_TEXT);
+    doc.text("No se registraron capacitaciones en este período.", MRG+4, y); y += 12;
+  }
+
+  // ── MANTENIMIENTOS ──
+  if (y > PH-60) { doc.addPage(); y = MRG+10; }
+  y = subTitulo("3.4 Mantenimientos", y);
+  if (mantMes.length > 0) {
+    doc.autoTable({
+      startY: y, margin: { left:MRG, right:MRG },
+      head: [["Fecha","Tipo","Descripción","Responsable"]],
+      body: mantMes.map(s => [
+        fmtFecha(s),
+        s.tipo || s.tipoMantenimiento || "N/R",
+        s.descripcion || s.actividad || s.detalle || "Sin descripción",
+        s.responsable || s.tecnico || "N/R",
+      ]),
+      headStyles: { fillColor: C_MED, textColor: C_BLANC, fontStyle:"bold", fontSize:9 },
+      bodyStyles: { fontSize:9, cellPadding:4 },
+      columnStyles: { 0:{cellWidth:28}, 1:{cellWidth:30}, 2:{cellWidth:90}, 3:{cellWidth:28} },
+      alternateRowStyles: { fillColor: C_GRIS }, theme:"grid",
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  } else {
+    doc.setFont("helvetica","italic"); doc.setFontSize(9); doc.setTextColor(...C_TEXT);
+    doc.text("No se registraron mantenimientos en este período.", MRG+4, y); y += 12;
+  }
+
+  // ════════════════════════════════════════
+  //  SECCIONES DE TEXTO
+  // ════════════════════════════════════════
+  const secciones = [
+    { num:"4", titulo:"INTRODUCCIÓN",               texto: intro  },
+    { num:"5", titulo:"ANÁLISIS DE ACTIVIDADES",    texto: analis },
+    { num:"6", titulo:"HALLAZGOS Y OBSERVACIONES",  texto: hall   },
+    { num:"7", titulo:"CONCLUSIONES",               texto: conc   },
+    { num:"8", titulo:"RECOMENDACIONES",            texto: recom  },
+  ];
+
+  for (const sec of secciones) {
+    if (y > PH-60) { doc.addPage(); y = MRG+10; }
+    y = secTitulo(`${sec.num}. ${sec.titulo}`, y);
+    y = addParrafos(sec.texto, y);
+  }
+
+  // ════════════════════════════════════════
+  //  FIRMA
+  // ════════════════════════════════════════
+  if (y > PH-70) { doc.addPage(); y = MRG+10; }
+  y = secTitulo("9. FIRMA Y APROBACIÓN", y);
+  y += 12;
+
+  doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.8);
+  doc.line(MRG+15, y, MRG+115, y);
+  y += 7;
+  doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.setTextColor(...C_AZUL);
+  doc.text(resp, MRG+15, y); y += 6;
+  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(...C_NEGRO);
+  doc.text("Coordinadora SG-SST", MRG+15, y); y += 6;
+  doc.text("C.E. 679955", MRG+15, y); y += 6;
+  doc.setFontSize(9); doc.setTextColor(...C_TEXT);
+  doc.text(`Elaborado en ${mesNom} de ${anio}`, MRG+15, y); y += 14;
+
+  // Nota legal
+  doc.setFont("helvetica","italic"); doc.setFontSize(7.5); doc.setTextColor(...C_TEXT);
+  const nota = "Este informe fue elaborado conforme al SG-SST de la Torres de Anim II, en cumplimiento del Decreto 1072 de 2015 y la Resolución 0312 de 2019. Documento de uso interno y confidencial. Su reproducción o distribución sin autorización escrita está prohibida.";
+  if (y + 15 > PH-20) { doc.addPage(); y = MRG+10; }
+  const notaLines = doc.splitTextToSize(nota, CTW);
+  doc.text(notaLines, MRG, y);
+
+  // Pies de página
+  addFooters();
+
+  // Guardar
+  const nombreArchivo = `Informe_SST_Nepal2_${mesNom}_${anio}.pdf`;
+  doc.save(nombreArchivo);
+  console.log("[PDF] Guardado:", nombreArchivo, "| páginas:", doc.internal.getNumberOfPages());
+  return nombreArchivo;
+}
+</script>
+</body>
+</html>

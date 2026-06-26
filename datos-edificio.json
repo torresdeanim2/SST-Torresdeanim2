@@ -1,0 +1,20 @@
+{
+  "id": "anim2",
+  "nombre": "Torres de Anim II",
+  "nit": "900563807-7",
+  "direccion": "Calle 103A No. 11B-34",
+  "email": "torresdeanim2@gmail.com",
+  "unidades": "42",
+  "trabajadores": "4",
+  "contratistas_count": "2",
+  "admin_nombre": "Gloria Azcárate",
+  "admin_tel": "315 633 0171",
+  "color_primary": "#10B981",
+  "color_secondary": "#34D399",
+  "emoji": "🏗️",
+  "github_org": "torresdeanim2",
+  "repo_name": "sst-anim2",
+  "admin_user": "c3madriz",
+  "admin_pass": "anim2026",
+  "contratistas": []
+}
