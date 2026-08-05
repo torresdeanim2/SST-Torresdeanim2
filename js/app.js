@@ -73,17 +73,21 @@ window.cerrarModalLogin = function() {
 };
 
 // ─── Login / Logout ───────────────────────────────
-window.hacerLogin = function() {
-    window.isLoggedIn = true;
+window.aplicarUiLogin = function() {
     var cfg = window.edificioConfig;
     document.getElementById('sb-usuario').textContent = cfg.admin_user || 'Admin';
-
     var badge   = document.getElementById('admin-badge');
     var btnOut  = document.getElementById('btn-logout');
     var btnOutSb = document.getElementById('btn-logout-sb');
     if (badge)   badge.classList.remove('hidden');
     if (btnOut)  btnOut.classList.remove('hidden');
     if (btnOutSb) btnOutSb.classList.remove('hidden');
+};
+
+window.hacerLogin = function() {
+    window.isLoggedIn = true;
+    localStorage.setItem('sst_' + window.edificioConfig.id + '_admin', 'true');
+    window.aplicarUiLogin();
 
     document.getElementById('modal-login').classList.add('hidden');
     var destino = window._pendingSection || 'dashboard';
@@ -94,6 +98,7 @@ window.hacerLogin = function() {
 
 window.hacerLogout = function() {
     window.isLoggedIn = false;
+    localStorage.removeItem('sst_' + window.edificioConfig.id + '_admin');
     var badge   = document.getElementById('admin-badge');
     var btnOut  = document.getElementById('btn-logout');
     var btnOutSb = document.getElementById('btn-logout-sb');
@@ -137,6 +142,9 @@ async function initApp() {
 
         var ahora = new Date();
         setTxt('header-mes-anio', MESES[ahora.getMonth()] + ' ' + ahora.getFullYear());
+
+        window.isLoggedIn = localStorage.getItem('sst_' + cfg.id + '_admin') === 'true';
+        if (window.isLoggedIn) window.aplicarUiLogin();
 
         document.querySelectorAll('[data-section]').forEach(function(btn) {
             btn.addEventListener('click', function() {
