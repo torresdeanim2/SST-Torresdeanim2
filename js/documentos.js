@@ -94,13 +94,14 @@ function cargarDocumentosBase() {
 
 function cargarInformesYCuentas() {
     var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
     window.db.ref('edificios/' + cfg.id + '/informes').once('value').then(function(snap) {
         var informes = snap.val() || {};
         var hoy = new Date();
         var mesActual = hoy.getMonth() + 1;
         var htmlI = '';
 
-        for (var m = 1; m <= 12; m++) {
+        for (var m = mesInicio; m <= 12; m++) {
             var infoI = informes['mes' + m] || {};
             var esPasado = m < mesActual;
             var esActual = m === mesActual;
