@@ -419,7 +419,7 @@
             <div class="progress-info">
                 <div class="progress-stat">
                     <strong>Progreso Mensual 2026</strong>
-                    <span id="induccion-progress">0/12 meses completados</span>
+                    <span id="induccion-progress">0/6 meses completados</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="induccion-bar" style="width: 0%"></div>
@@ -430,7 +430,7 @@
                 <h2 class="form-title">Registro de Inducción y Reinducción SST</h2>
                 
                 <div class="alert alert-info">
-                    <strong>📋 Frecuencia:</strong> Mensual | <strong>📅 Próximo registro:</strong> Enero 2026
+                    <strong>📋 Frecuencia:</strong> Mensual | <strong>📅 Próximo registro:</strong> Agosto 2026
                 </div>
 
                 <!-- ═══════════════════════════════════════════════════════════════
@@ -621,9 +621,9 @@ function cancelarEdicionInduccion() {
 }
 
 function calcularTotalAsistentes() {
-    const Contratista 1 = parseInt(document.getElementById('asistentesContratista1').value) || 0;
-    const Contratista 2 = parseInt(document.getElementById('asistentesContratista2').value) || 0;
-    document.getElementById('totalAsistentes').value = Contratista 1 + Contratista 2;
+    const contratista1 = parseInt(document.getElementById('asistentesContratista1').value) || 0;
+    const contratista2 = parseInt(document.getElementById('asistentesContratista2').value) || 0;
+    document.getElementById('totalAsistentes').value = contratista1 + contratista2;
 }
 
 function limpiarFormulario(formId) {
@@ -740,7 +740,7 @@ async function cargarRegistrosInducciones() {
 
         if (!registros) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No hay registros aún. Completa el primer formulario para comenzar.</td></tr>';
-            document.getElementById('induccion-progress').textContent = '0/12 meses completados';
+            document.getElementById('induccion-progress').textContent = '0/6 meses completados';
             return;
         }
 
@@ -774,8 +774,8 @@ async function cargarRegistrosInducciones() {
 
         // Actualizar contador de progreso
         const completados = mesesConRegistro.size;
-        const progreso = Math.round((completados / 12) * 100);
-        document.getElementById('induccion-progress').textContent = `${completados}/12 meses completados`;
+        const progreso = Math.round((completados / 6) * 100);
+        document.getElementById('induccion-progress').textContent = `${completados}/6 meses completados`;
         const barraInd = document.getElementById('induccion-bar');
         if (barraInd) barraInd.style.width = progreso + '%';
 
@@ -817,7 +817,7 @@ window.addEventListener('DOMContentLoaded', cargarRegistrosInducciones);
             <div class="progress-info">
                 <div class="progress-stat">
                     <strong>Progreso Mensual 2026</strong>
-                    <span id="inspeccion-progress">0/12 meses completados</span>
+                    <span id="inspeccion-progress">0/6 meses completados</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="inspeccion-bar" style="width: 0%"></div>
@@ -828,7 +828,7 @@ window.addEventListener('DOMContentLoaded', cargarRegistrosInducciones);
                 <h2 class="form-title">Registro de Inspecciones de Seguridad</h2>
                 
                 <div class="alert alert-info">
-                    <strong>📋 Frecuencia:</strong> Mensual (locativa) + Trimestral (equipos) | <strong>📅 Próximo registro:</strong> Enero 2026
+                    <strong>📋 Frecuencia:</strong> Mensual (locativa) + Trimestral (equipos) | <strong>📅 Próximo registro:</strong> Agosto 2026
                 </div>
 
                 <!-- ═══════════════════════════════════════════════════════════════
@@ -856,14 +856,12 @@ window.addEventListener('DOMContentLoaded', cargarRegistrosInducciones);
                 <label class="form-label">Mes/Período <span class="required">*</span></label>
                 <select name="periodo" class="form-select" required>
                     <option value="">Seleccionar...</option>
-                    <option value="Enero 2026">Enero 2026</option>
-                    <option value="Febrero 2026">Febrero 2026</option>
-                    <option value="Marzo 2026">Marzo 2026</option>
-                    <option value="Abril 2026">Abril 2026</option>
-                    <option value="Mayo 2026">Mayo 2026</option>
-                    <option value="Junio 2026">Junio 2026</option>
-                    <option value="Q1 2026 (Ene-Mar)">Q1 2026 (Ene-Mar)</option>
-                    <option value="Q2 2026 (Abr-Jun)">Q2 2026 (Abr-Jun)</option>
+                    <option value="Julio 2026">Julio 2026</option>
+                    <option value="Agosto 2026">Agosto 2026</option>
+                    <option value="Septiembre 2026">Septiembre 2026</option>
+                    <option value="Octubre 2026">Octubre 2026</option>
+                    <option value="Noviembre 2026">Noviembre 2026</option>
+                    <option value="Diciembre 2026">Diciembre 2026</option>
                     <option value="Q3 2026 (Jul-Sep)">Q3 2026 (Jul-Sep)</option>
                     <option value="Q4 2026 (Oct-Dic)">Q4 2026 (Oct-Dic)</option>
                 </select>
@@ -1169,7 +1167,7 @@ async function cargarRegistrosInspecciones() {
 
         if (!registros) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No hay registros aún</td></tr>';
-            document.getElementById('inspeccion-progress').textContent = '0/12 meses completados';
+            document.getElementById('inspeccion-progress').textContent = '0/6 meses completados';
             return;
         }
 
@@ -1199,8 +1197,8 @@ async function cargarRegistrosInspecciones() {
 
         // Actualizar contador de progreso
         const completados = periodosConRegistro.size;
-        const progreso = Math.round((completados / 12) * 100);
-        document.getElementById('inspeccion-progress').textContent = `${completados}/12 meses completados`;
+        const progreso = Math.round((completados / 6) * 100);
+        document.getElementById('inspeccion-progress').textContent = `${completados}/6 meses completados`;
         const barraInsp = document.getElementById('inspeccion-bar');
         if (barraInsp) barraInsp.style.width = progreso + '%';
 
@@ -1555,7 +1553,7 @@ window.addEventListener('DOMContentLoaded', cargarRegistrosMantenimientos);
                 <h2 class="form-title">Seguimiento a Contratistas</h2>
                 
                 <div class="alert alert-info">
-                    <strong>📋 Frecuencia:</strong> Trimestral | <strong>🏢 Empresas:</strong> Contratista 1, Contratista 2 | <strong>📅 Próxima verificación:</strong> Q1 2026
+                    <strong>📋 Frecuencia:</strong> Trimestral | <strong>🏢 Empresas:</strong> Contratista 1, Contratista 2 | <strong>📅 Próxima verificación:</strong> Q3 2026
                 </div>
 
                 <!-- ═══════════════════════════════════════════════════════════════
@@ -2320,7 +2318,7 @@ window.addEventListener('DOMContentLoaded', cargarRegistrosAccidentes);
                 <h2 class="form-title">Registro de Simulacros</h2>
                 
                 <div class="alert alert-info">
-                    <strong>📋 Frecuencia:</strong> Mínimo 2 simulacros anuales | <strong>📅 Próximo simulacro:</strong> Febrero 2026
+                    <strong>📋 Frecuencia:</strong> Mínimo 2 simulacros anuales | <strong>📅 Próximo simulacro:</strong> Agosto 2026
                 </div>
 
                 <!-- ═══════════════════════════════════════════════════════════════
