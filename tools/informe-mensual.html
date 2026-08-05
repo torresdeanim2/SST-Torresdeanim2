@@ -1267,7 +1267,7 @@ async function construirPDF() {
   addFooters();
 
   // Guardar
-  const nombreArchivo = `Informe_SST_Nepal2_${mesNom}_${anio}.pdf`;
+  const nombreArchivo = `Informe_SST_TorresDeAnimII_${mesNom}_${anio}.pdf`;
   doc.save(nombreArchivo);
   console.log("[PDF] Guardado:", nombreArchivo, "| páginas:", doc.internal.getNumberOfPages());
   return nombreArchivo;
