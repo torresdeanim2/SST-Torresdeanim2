@@ -19,13 +19,13 @@ function initHerramientas() {
         '</div>' +
 
         '<div class="herramientas-grid">' +
-          mkHerrCard('📝', 'Registros Operacionales', 'Inducción, inspecciones, mantenimiento, contratistas, accidentes y simulacros.', 'abrirHerramienta("registros.html")') +
-          mkHerrCard('📸', 'Módulo Supervisión (Fotos)', 'Registra supervisiones mensuales con evidencia fotográfica y genera PDF.', 'abrirHerramienta("supervision.html")') +
-          mkHerrCard('📊', 'Informe Mensual PDF', 'Genera el informe consolidado del mes con todas las actividades en PDF.', 'abrirHerramienta("informe-mensual.html")') +
-          mkHerrCard('📋', 'Plan Anual de Trabajo 2026', 'Edita las 51 actividades del PAT y marca avances mes a mes.', 'abrirHerramienta("pat-2026.html")') +
-          mkHerrCard('🔧', 'Programa de Mantenimiento', 'Gestiona el programa de mantenimientos preventivos y correctivos.', 'abrirHerramienta("mantenimiento-2026.html")') +
-          mkHerrCard('⚠️', 'Investigación de Accidentes', 'Diligencia el formato oficial de investigación de accidentes e incidentes.', 'abrirHerramienta("investigacion-accidentes.html")') +
-          mkHerrCard('🚨', 'Registro de Simulacros', 'Registra simulacros de emergencia con participantes y evaluación.', 'abrirHerramienta("simulacros.html")') +
+          mkHerrCard('📝', 'Registros Operacionales', 'Inducción, inspecciones, mantenimiento, contratistas, accidentes y simulacros.', "abrirHerramienta('registros.html')") +
+          mkHerrCard('📸', 'Módulo Supervisión (Fotos)', 'Registra supervisiones mensuales con evidencia fotográfica y genera PDF.', "abrirHerramienta('supervision.html')") +
+          mkHerrCard('📊', 'Informe Mensual PDF', 'Genera el informe consolidado del mes con todas las actividades en PDF.', "abrirHerramienta('informe-mensual.html')") +
+          mkHerrCard('📋', 'Plan Anual de Trabajo 2026', 'Edita las 51 actividades del PAT y marca avances mes a mes.', "abrirHerramienta('pat-2026.html')") +
+          mkHerrCard('🔧', 'Programa de Mantenimiento', 'Gestiona el programa de mantenimientos preventivos y correctivos.', "abrirHerramienta('mantenimiento-2026.html')") +
+          mkHerrCard('⚠️', 'Investigación de Accidentes', 'Diligencia el formato oficial de investigación de accidentes e incidentes.', "abrirHerramienta('investigacion-accidentes.html')") +
+          mkHerrCard('🚨', 'Registro de Simulacros', 'Registra simulacros de emergencia con participantes y evaluación.', "abrirHerramienta('simulacros.html')") +
           mkHerrCard('💰', 'Cuenta de Cobro', 'Genera la cuenta de cobro mensual de honorarios SST.', 'abrirGeneradorCuenta()') +
           mkHerrCard('📱', 'Comunicaciones Contratistas', 'Genera mensajes preformateados para WhatsApp.', 'abrirComunicaciones()') +
         '</div>' +
