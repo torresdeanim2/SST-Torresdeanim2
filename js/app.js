@@ -127,10 +127,11 @@ async function initApp() {
         document.documentElement.style.setProperty('--accent',    cfg.color_secondary);
 
         var setTxt = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-        setTxt('header-emoji',    cfg.emoji);
+        var setImg = function(id, src) { var el = document.getElementById(id); if (el) el.src = src; };
+        setImg('header-logo',     cfg.logo_file || '');
+        setImg('sb-logo',         cfg.logo_file || '');
         setTxt('header-nombre',   cfg.nombre);
         setTxt('header-nit',      'NIT: ' + cfg.nit + ' · ' + cfg.direccion);
-        setTxt('sb-emoji',        cfg.emoji);
         setTxt('sb-nombre',       cfg.nombre);
         document.title = cfg.emoji + ' SG-SST | ' + cfg.nombre;
 
