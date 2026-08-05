@@ -22,15 +22,25 @@ function initDashboard() {
           '<div class="card-header"><span class="card-title">🏢 ' + cfg.nombre + '</span>' +
           '<span class="badge badge-success">SG-SST Activo 2026</span></div>' +
           '<div class="stats-grid" style="margin-top:6px;">' +
-            mkStat('🏠', cfg.unidades,          'Unidades') +
-            mkStat('👷', cfg.trabajadores,       'Trabajadores') +
-            mkStat('🤝', cfg.contratistas_count, 'Contratistas') +
-            mkStat('📋', 'Res. 0312/2019',       'Normativa') +
+            mkStat('✅', cfg.cumplimiento_global ? cfg.cumplimiento_global + '%' : 'Pendiente', 'Cumplimiento Global SG-SST') +
+            mkStat('📄', cfg.documentos_completos || 'Pendiente', 'Documentos Completos') +
+            mkStat('🎓', cfg.capacitacion_cobertura ? cfg.capacitacion_cobertura + '%' : 'Pendiente', 'Cobertura Capacitación') +
+            '<div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value" id="dash-stat-accidentes">—</div><div class="stat-label">Accidentes 2026</div></div>' +
+            '<div class="stat-card"><div class="stat-icon">🔍</div><div class="stat-value" id="dash-stat-inspecciones">—</div><div class="stat-label">Inspecciones Realizadas</div></div>' +
+            mkStat('👷', cfg.trabajadores, 'Número de Trabajadores') +
+            mkStat('🏘️', cfg.unidades, 'Unidades Habitacionales') +
           '</div>' +
           '<div style="margin-top:14px;font-size:0.88rem;color:var(--text-gray);">' +
             '📍 ' + cfg.direccion + ' &nbsp;|&nbsp; 📧 ' + cfg.email +
             ' &nbsp;|&nbsp; 📱 Adm: ' + cfg.admin_nombre + ' · ' + cfg.admin_tel +
           '</div>' +
+        '</div>' +
+
+        '<div id="dash-banner-cotiz" class="alert-banner hidden" style="margin-bottom:20px;">' +
+          '<span class="ab-icon">💰</span>' +
+          '<div class="ab-body"><div class="ab-title">Cotizaciones pendientes</div>' +
+          '<div class="ab-msg" id="dash-banner-cotiz-msg">Cargando...</div></div>' +
+          '<button class="btn-primary" style="padding:8px 16px;font-size:0.83rem;white-space:nowrap;" onclick="window.mostrarSeccion(\'cotizaciones\')">Ver Cotizaciones</button>' +
         '</div>' +
 
         '<div class="card">' +
@@ -60,6 +70,8 @@ function initDashboard() {
 
     cargarProgresoPAT();
     renderMesesGrid();
+    cargarStatsExtra();
+    actualizarBannerCotizacionesDash();
 }
 
 function mkStat(icon, valor, label) {
@@ -70,11 +82,13 @@ function mkStat(icon, valor, label) {
 
 function cargarProgresoPAT() {
     var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
     window.db.ref('edificios/' + cfg.id + '/ejecucion').once('value').then(function(snap) {
         var data = snap.val() || {};
-        var completadas = 0, total = 12 * ACTIVIDADES_PAT.length;
+        var mesesTotal = 12 - mesInicio + 1;
+        var completadas = 0, total = mesesTotal * ACTIVIDADES_PAT.length;
 
-        for (var m = 1; m <= 12; m++) {
+        for (var m = mesInicio; m <= 12; m++) {
             var clvMes = 'mes' + m;
             if (data[clvMes]) {
                 ACTIVIDADES_PAT.forEach(function(act) {
@@ -96,6 +110,7 @@ function cargarProgresoPAT() {
 
 function renderMesesGrid() {
     var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
     var grid = document.getElementById('dash-meses-grid');
     if (!grid) return;
     var hoy = new Date();
@@ -105,7 +120,7 @@ function renderMesesGrid() {
         var data = snap.val() || {};
         var html = '';
 
-        for (var m = 1; m <= 12; m++) {
+        for (var m = mesInicio; m <= 12; m++) {
             var clvMes = 'mes' + m;
             var mesData = data[clvMes] || {};
             var hechas = 0;
@@ -137,4 +152,66 @@ function renderMesesGrid() {
         }
         grid.innerHTML = html;
     });
+}
+
+function cargarStatsExtra() {
+    var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
+
+    // Accidentes (real, colección 'accidentes' — vacía por defecto)
+    window.db.ref('edificios/' + cfg.id + '/accidentes').once('value').then(function(snap) {
+        var data = snap.val() || {};
+        var el = document.getElementById('dash-stat-accidentes');
+        if (el) el.textContent = Object.keys(data).length;
+    }).catch(function() {
+        var el = document.getElementById('dash-stat-accidentes');
+        if (el) el.textContent = '0';
+    });
+
+    // Inspecciones Realizadas — meses (desde mes_inicio) con supervisión o inspección completada
+    window.db.ref('edificios/' + cfg.id + '/ejecucion').once('value').then(function(snap) {
+        var data = snap.val() || {};
+        var mesesConInspeccion = 0;
+        for (var m = mesInicio; m <= 12; m++) {
+            var mesData = data['mes' + m];
+            if (mesData && ((mesData.supervision && mesData.supervision.completado) || (mesData.inspeccion && mesData.inspeccion.completado))) {
+                mesesConInspeccion++;
+            }
+        }
+        var totalMeses = 12 - mesInicio + 1;
+        var el = document.getElementById('dash-stat-inspecciones');
+        if (el) el.textContent = mesesConInspeccion + '/' + totalMeses;
+    });
+}
+
+// ─── Banner de cotizaciones pendientes (dashboard) ──
+function actualizarBannerCotizacionesDash() {
+    var cfg = window.edificioConfig;
+    var banner = document.getElementById('dash-banner-cotiz');
+    if (!banner) return;
+
+    window.db.ref('edificios/' + cfg.id + '/cotizaciones').once('value').then(function(snap) {
+        var data = snap.val() || {};
+        var empresas = data.empresas ? Object.keys(data.empresas).map(function(k) { return data.empresas[k]; }) : [];
+        var tracking = data.tracking || {};
+        var pasosCompletos = (typeof COT_STEPS !== 'undefined' ? COT_STEPS : []).filter(function(s) {
+            return tracking[s.id] && tracking[s.id].completado;
+        }).length;
+        var totalPasos = (typeof COT_STEPS !== 'undefined' ? COT_STEPS.length : 0);
+        var completado = empresas.length > 0 && totalPasos > 0 && pasosCompletos === totalPasos;
+
+        if (!empresas.length || completado) { banner.classList.add('hidden'); return; }
+
+        var conValor = empresas.filter(function(e) { return e.valor > 0; }).sort(function(a, b) { return a.valor - b.valor; });
+        var msg = document.getElementById('dash-banner-cotiz-msg');
+        if (msg) {
+            if (conValor.length) {
+                var min = conValor[0];
+                msg.innerHTML = 'Mejor propuesta: <strong>' + min.nombre + '</strong> — $' + parseInt(min.valor).toLocaleString('es-CO') + (min.servicio ? ' · ' + min.servicio : '') + '. Cumplimiento Res. 0312/2019.';
+            } else {
+                msg.textContent = 'Hay ' + empresas.length + ' empresa(s) cotizante(s) registrada(s), falta definir valor y aprobar.';
+            }
+        }
+        banner.classList.remove('hidden');
+    }).catch(function() { banner.classList.add('hidden'); });
 }

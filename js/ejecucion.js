@@ -15,6 +15,13 @@ var EJ_MESES_COMPLETO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
 function initEjecucion() {
     var sec = document.getElementById('section-ejecucion');
     if (!sec) return;
+    var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
+
+    var mesesHeader = '';
+    for (var mh = mesInicio; mh <= 12; mh++) {
+        mesesHeader += '<th class="ej-mes-header" style="text-align:center;min-width:55px;">' + EJ_MESES[mh - 1] + '</th>';
+    }
 
     sec.innerHTML =
         '<div class="card">' +
@@ -26,7 +33,7 @@ function initEjecucion() {
           '<div class="table-wrap">' +
             '<table class="ej-table">' +
               '<thead><tr><th>Actividad</th>' +
-              EJ_MESES.map(function(m,i){ return '<th class="ej-mes-header" style="text-align:center;min-width:55px;">' + m + '</th>'; }).join('') +
+              mesesHeader +
               '</tr></thead>' +
               '<tbody id="ej-tbody"></tbody>' +
             '</table>' +
@@ -69,13 +76,15 @@ function cargarEjecucion() {
 }
 
 function renderEjecucionTabla() {
+    var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
     var tbody = document.getElementById('ej-tbody');
     if (!tbody) return;
     var html = '';
 
     EJ_ACTOS.forEach(function(act) {
         html += '<tr><td style="font-weight:600;font-size:0.88rem;">' + act.label + '</td>';
-        for (var m = 1; m <= 12; m++) {
+        for (var m = mesInicio; m <= 12; m++) {
             var clv = 'mes' + m;
             var completado = _ejData[clv] && _ejData[clv][act.id] && _ejData[clv][act.id].completado;
             var enlace = _ejData[clv] && _ejData[clv][act.id] && _ejData[clv][act.id].enlace;
@@ -92,13 +101,15 @@ function renderEjecucionTabla() {
 }
 
 function renderNotasMes() {
+    var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
     var grid = document.getElementById('ej-notas-grid');
     if (!grid) return;
     var hoy = new Date();
     var mesActual = hoy.getMonth() + 1;
     var html = '';
 
-    for (var m = 1; m <= 12; m++) {
+    for (var m = mesInicio; m <= 12; m++) {
         var clv = 'mes' + m;
         var nota = (_ejData[clv] && _ejData[clv].observacion) || '';
         var esActual = m === mesActual;
