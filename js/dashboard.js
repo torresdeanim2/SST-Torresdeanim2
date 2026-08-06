@@ -13,15 +13,15 @@ var MES_NOMBRES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 var ESPECIFICACIONES_TECNICAS = [
-    { key: 'tanques_lavado',     item: 'Tanques de agua',                    norma: 'Lavado y desinfección — Ley 9/1979, Res. 2115/2007, Decreto 1575/2007', periodicidad: 'Cada 6 meses', aplicaToggle: true },
+    { key: 'tanques_lavado',     item: 'Tanques de agua',                    norma: 'Lavado y desinfección — Ley 9/1979, Res. 2115/2007, Decreto 1575/2007', periodicidad: 'Cada 6 meses' },
     { key: 'ascensor_contrato',  item: 'Ascensor',                           norma: 'Contrato de mantenimiento preventivo — NTC 5926-1',                      periodicidad: 'Mensual' },
     { key: 'ascensor_onac',      item: 'Ascensor',                           norma: 'Certificación de operatividad por organismo acreditado ONAC',            periodicidad: 'Anual' },
     { key: 'gas_revision',       item: 'Instalación de gas (redes comunes)', norma: 'Revisión periódica — Res. CREG 059/2012',                                periodicidad: 'Cada 5 años' },
     { key: 'extintores_mant',    item: 'Extintores',                        norma: 'Mantenimiento preventivo / recarga — NTC 2885',                          periodicidad: 'Anual (o al descargarse)' },
     { key: 'extintores_hidro',   item: 'Extintores',                        norma: 'Prueba hidrostática',                                                    periodicidad: 'Cada 5 años (CO2, ABC, agentes limpios)' },
-    { key: 'red_contraincendio', item: 'Red contra incendio / gabinetes',    norma: 'Mantenimiento e inspección — NTC 1669 / NFPA',                           periodicidad: 'Anual', aplicaToggle: true },
-    { key: 'pararrayos',         item: 'Pararrayos / puesta a tierra',       norma: 'Certificado de medición de resistencia — RETIE',                         periodicidad: 'Anual', aplicaToggle: true },
-    { key: 'planta_electrica',   item: 'Planta eléctrica de emergencia',     norma: 'Prueba de arranque y mantenimiento',                                     periodicidad: 'Mensual / según manual fabricante', aplicaToggle: true },
+    { key: 'red_contraincendio', item: 'Red contra incendio / gabinetes',    norma: 'Mantenimiento e inspección — NTC 1669 / NFPA',                           periodicidad: 'Anual' },
+    { key: 'pararrayos',         item: 'Pararrayos / puesta a tierra',       norma: 'Certificado de medición de resistencia — RETIE',                         periodicidad: 'Anual' },
+    { key: 'planta_electrica',   item: 'Planta eléctrica de emergencia',     norma: 'Prueba de arranque y mantenimiento',                                     periodicidad: 'Mensual / según manual fabricante' },
     { key: 'subestacion',        item: 'Subestación eléctrica',              norma: 'Mantenimiento e inspección — RETIE',                                     periodicidad: 'Anual' },
     { key: 'puertas_electricas', item: 'Puertas eléctricas',                 norma: 'Certificación de funcionamiento',                                        periodicidad: 'Anual' },
     { key: 'montacoches_mant',   item: 'Elevador vehicular / Montacoches',   norma: 'Mantenimiento preventivo — NTC 5926-1',                                  periodicidad: 'Mensual' },
@@ -228,17 +228,15 @@ function cargarEspecTecnicas() {
         var total = 0, completados = 0;
         ESPECIFICACIONES_TECNICAS.forEach(function(e) {
             var d = data[e.key] || {};
-            var aplica = e.aplicaToggle ? (d.aplica !== false) : true;
+            var aplica = d.aplica !== false;
             if (aplica) {
                 total++;
                 if (d.completado) completados++;
             }
-            var aplicaCell = e.aplicaToggle
-                ? '<select id="et-aplica-' + e.key + '" onchange="cambiarAplicaEspecTecnica(\'' + e.key + '\',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;">' +
+            var aplicaCell = '<select id="et-aplica-' + e.key + '" onchange="cambiarAplicaEspecTecnica(\'' + e.key + '\',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;">' +
                     '<option value="si"' + (aplica ? ' selected' : '') + '>Sí</option>' +
                     '<option value="no"' + (!aplica ? ' selected' : '') + '>No</option>' +
-                  '</select>'
-                : '<span style="color:var(--text-gray);">—</span>';
+                  '</select>';
             html += '<tr' + (aplica ? '' : ' style="opacity:0.5;"') + '>' +
                 '<td style="font-weight:600;">' + e.item + '</td>' +
                 '<td style="font-size:0.82rem;">' + e.norma + '</td>' +
