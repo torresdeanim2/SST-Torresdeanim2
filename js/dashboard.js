@@ -13,17 +13,20 @@ var MES_NOMBRES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 var ESPECIFICACIONES_TECNICAS = [
-    { key: 'tanques_lavado',     item: 'Tanques de agua',                    norma: 'Lavado y desinfección — Ley 9/1979, Res. 2115/2007, Decreto 1575/2007', periodicidad: 'Cada 6 meses' },
-    { key: 'tanques_potable',    item: 'Tanques de agua',                    norma: 'Certificado de potabilidad (análisis fisicoquímico/microbiológico)',     periodicidad: 'Según autoridad local' },
+    { key: 'tanques_lavado',     item: 'Tanques de agua',                    norma: 'Lavado y desinfección — Ley 9/1979, Res. 2115/2007, Decreto 1575/2007', periodicidad: 'Cada 6 meses', aplicaToggle: true },
     { key: 'ascensor_contrato',  item: 'Ascensor',                           norma: 'Contrato de mantenimiento preventivo — NTC 5926-1',                      periodicidad: 'Mensual' },
     { key: 'ascensor_onac',      item: 'Ascensor',                           norma: 'Certificación de operatividad por organismo acreditado ONAC',            periodicidad: 'Anual' },
     { key: 'gas_revision',       item: 'Instalación de gas (redes comunes)', norma: 'Revisión periódica — Res. CREG 059/2012',                                periodicidad: 'Cada 5 años' },
-    { key: 'extintores_visual',  item: 'Extintores',                        norma: 'Inspección visual — NTC 2885',                                           periodicidad: 'Mensual' },
     { key: 'extintores_mant',    item: 'Extintores',                        norma: 'Mantenimiento preventivo / recarga — NTC 2885',                          periodicidad: 'Anual (o al descargarse)' },
     { key: 'extintores_hidro',   item: 'Extintores',                        norma: 'Prueba hidrostática',                                                    periodicidad: 'Cada 5 años (CO2, ABC, agentes limpios)' },
-    { key: 'red_contraincendio', item: 'Red contra incendio / gabinetes',    norma: 'Mantenimiento e inspección — NTC 1669 / NFPA',                           periodicidad: 'Anual' },
-    { key: 'pararrayos',         item: 'Pararrayos / puesta a tierra',       norma: 'Certificado de medición de resistencia — RETIE',                         periodicidad: 'Anual' },
-    { key: 'planta_electrica',   item: 'Planta eléctrica de emergencia',     norma: 'Prueba de arranque y mantenimiento',                                     periodicidad: 'Mensual / según manual fabricante' }
+    { key: 'red_contraincendio', item: 'Red contra incendio / gabinetes',    norma: 'Mantenimiento e inspección — NTC 1669 / NFPA',                           periodicidad: 'Anual', aplicaToggle: true },
+    { key: 'pararrayos',         item: 'Pararrayos / puesta a tierra',       norma: 'Certificado de medición de resistencia — RETIE',                         periodicidad: 'Anual', aplicaToggle: true },
+    { key: 'planta_electrica',   item: 'Planta eléctrica de emergencia',     norma: 'Prueba de arranque y mantenimiento',                                     periodicidad: 'Mensual / según manual fabricante', aplicaToggle: true },
+    { key: 'subestacion',        item: 'Subestación eléctrica',              norma: 'Mantenimiento e inspección — RETIE',                                     periodicidad: 'Anual' },
+    { key: 'puertas_electricas', item: 'Puertas eléctricas',                 norma: 'Certificación de funcionamiento',                                        periodicidad: 'Anual' },
+    { key: 'montacoches_mant',   item: 'Elevador vehicular / Montacoches',   norma: 'Mantenimiento preventivo — NTC 5926-1',                                  periodicidad: 'Mensual' },
+    { key: 'montacoches_onac',   item: 'Elevador vehicular / Montacoches',   norma: 'Certificación de operatividad por organismo acreditado ONAC',            periodicidad: 'Anual' },
+    { key: 'bbq_gas',            item: 'Parrilla / BBQ terraza',             norma: 'Revisión de instalación de gas',                                         periodicidad: 'Anual' }
 ];
 
 function initDashboard() {
@@ -75,17 +78,8 @@ function initDashboard() {
           '</div>' +
           '<div class="table-wrap" style="margin-top:14px;">' +
             '<table class="ej-table">' +
-              '<thead><tr><th>Ítem</th><th>Norma</th><th>Periodicidad</th><th style="text-align:center;">Al día</th><th>Última fecha</th></tr></thead>' +
-              '<tbody id="et-tbody">' +
-              ESPECIFICACIONES_TECNICAS.map(function(e) {
-                  return '<tr><td style="font-weight:600;">' + e.item + '</td>' +
-                      '<td style="font-size:0.82rem;">' + e.norma + '</td>' +
-                      '<td style="font-size:0.82rem;white-space:nowrap;">' + e.periodicidad + '</td>' +
-                      '<td style="text-align:center;"><input type="checkbox" id="et-cb-' + e.key + '" onchange="toggleEspecTecnica(\'' + e.key + '\',this.checked)"></td>' +
-                      '<td><input type="date" id="et-fecha-' + e.key + '" onchange="guardarFechaEspecTecnica(\'' + e.key + '\',this.value)"></td>' +
-                      '</tr>';
-              }).join('') +
-              '</tbody>' +
+              '<thead><tr><th>Ítem</th><th>Norma</th><th>Periodicidad</th><th style="text-align:center;">Aplica</th><th style="text-align:center;">Al día</th><th>Última fecha</th></tr></thead>' +
+              '<tbody id="et-tbody"></tbody>' +
             '</table>' +
           '</div>' +
         '</div>' +
@@ -226,22 +220,36 @@ function cargarStatsExtra() {
 // ─── Especificaciones Técnicas (checklist mantenimientos obligatorios) ──
 function cargarEspecTecnicas() {
     var cfg = window.edificioConfig;
+    var tbody = document.getElementById('et-tbody');
+    if (!tbody) return;
     window.db.ref('edificios/' + cfg.id + '/especificaciones_tecnicas').once('value').then(function(snap) {
         var data = snap.val() || {};
-        var completados = 0;
+        var html = '';
+        var total = 0, completados = 0;
         ESPECIFICACIONES_TECNICAS.forEach(function(e) {
-            var d = data[e.key];
-            if (d && d.completado) {
-                completados++;
-                var cb = document.getElementById('et-cb-' + e.key);
-                if (cb) cb.checked = true;
+            var d = data[e.key] || {};
+            var aplica = e.aplicaToggle ? (d.aplica !== false) : true;
+            if (aplica) {
+                total++;
+                if (d.completado) completados++;
             }
-            if (d && d.fecha) {
-                var fi = document.getElementById('et-fecha-' + e.key);
-                if (fi) fi.value = d.fecha;
-            }
+            var aplicaCell = e.aplicaToggle
+                ? '<select id="et-aplica-' + e.key + '" onchange="cambiarAplicaEspecTecnica(\'' + e.key + '\',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;">' +
+                    '<option value="si"' + (aplica ? ' selected' : '') + '>Sí</option>' +
+                    '<option value="no"' + (!aplica ? ' selected' : '') + '>No</option>' +
+                  '</select>'
+                : '<span style="color:var(--text-gray);">—</span>';
+            html += '<tr' + (aplica ? '' : ' style="opacity:0.5;"') + '>' +
+                '<td style="font-weight:600;">' + e.item + '</td>' +
+                '<td style="font-size:0.82rem;">' + e.norma + '</td>' +
+                '<td style="font-size:0.82rem;white-space:nowrap;">' + e.periodicidad + '</td>' +
+                '<td style="text-align:center;">' + aplicaCell + '</td>' +
+                '<td style="text-align:center;"><input type="checkbox" id="et-cb-' + e.key + '"' + (d.completado ? ' checked' : '') + (aplica ? '' : ' disabled') + ' onchange="toggleEspecTecnica(\'' + e.key + '\',this.checked)"></td>' +
+                '<td><input type="date" id="et-fecha-' + e.key + '" value="' + (d.fecha || '') + '"' + (aplica ? '' : ' disabled') + ' onchange="guardarFechaEspecTecnica(\'' + e.key + '\',this.value)"></td>' +
+                '</tr>';
         });
-        actualizarEtProgreso(completados);
+        tbody.innerHTML = html;
+        actualizarEtProgreso(completados, total);
     });
 }
 
@@ -251,8 +259,8 @@ window.toggleEspecTecnica = function(key, checked) {
     var fecha = (fechaInput && fechaInput.value) || null;
     window.db.ref('edificios/' + cfg.id + '/especificaciones_tecnicas/' + key).update({ completado: checked, fecha: fecha })
         .then(function() {
-            recalcularEtProgreso();
             mostrarToast(checked ? '✅ Marcado al día' : 'Desmarcado');
+            cargarEspecTecnicas();
         }).catch(function() { mostrarToast('Error al guardar', 'error'); });
 };
 
@@ -260,21 +268,22 @@ window.guardarFechaEspecTecnica = function(key, fecha) {
     window.db.ref('edificios/' + window.edificioConfig.id + '/especificaciones_tecnicas/' + key).update({ fecha: fecha });
 };
 
-function recalcularEtProgreso() {
-    var completados = 0;
-    ESPECIFICACIONES_TECNICAS.forEach(function(e) {
-        var cb = document.getElementById('et-cb-' + e.key);
-        if (cb && cb.checked) completados++;
-    });
-    actualizarEtProgreso(completados);
-}
+window.cambiarAplicaEspecTecnica = function(key, valor) {
+    var cfg = window.edificioConfig;
+    var aplica = valor === 'si';
+    window.db.ref('edificios/' + cfg.id + '/especificaciones_tecnicas/' + key).update({ aplica: aplica })
+        .then(function() {
+            mostrarToast(aplica ? '✅ Marcado como aplica' : '➖ Marcado como no aplica');
+            cargarEspecTecnicas();
+        }).catch(function() { mostrarToast('Error al guardar', 'error'); });
+};
 
-function actualizarEtProgreso(completados) {
-    var pct = Math.round((completados / ESPECIFICACIONES_TECNICAS.length) * 100);
+function actualizarEtProgreso(completados, total) {
+    var pct = total > 0 ? Math.round((completados / total) * 100) : 0;
     var bar = document.getElementById('et-bar');
     if (bar) bar.style.width = pct + '%';
     var lbl = document.getElementById('et-label');
-    if (lbl) lbl.textContent = completados + ' / ' + ESPECIFICACIONES_TECNICAS.length + ' al día';
+    if (lbl) lbl.textContent = completados + ' / ' + total + ' al día';
     var badge = document.getElementById('et-pct');
     if (badge) {
         badge.textContent = pct + '%';
