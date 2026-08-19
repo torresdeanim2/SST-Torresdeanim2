@@ -26,7 +26,13 @@ var ESPECIFICACIONES_TECNICAS = [
     { key: 'puertas_electricas', item: 'Puertas eléctricas',                 norma: 'Certificación de funcionamiento',                                        periodicidad: 'Anual' },
     { key: 'montacoches_mant',   item: 'Elevador vehicular / Montacoches',   norma: 'Mantenimiento preventivo — NTC 5926-1',                                  periodicidad: 'Mensual' },
     { key: 'montacoches_onac',   item: 'Elevador vehicular / Montacoches',   norma: 'Certificación de operatividad por organismo acreditado ONAC',            periodicidad: 'Anual' },
-    { key: 'bbq_gas',            item: 'Parrilla / BBQ terraza',             norma: 'Revisión de instalación de gas',                                         periodicidad: 'Anual' }
+    { key: 'bbq_gas',            item: 'Parrilla / BBQ terraza',             norma: 'Revisión de instalación de gas',                                         periodicidad: 'Anual' },
+    { key: 'camilla_inmovilizador', item: 'Camilla e inmovilizador de cuello', norma: 'Dotación botiquín tipo B/C — Resolución 705/2007 · Brigada de emergencias — Decreto 1072/2015', periodicidad: 'Anual' },
+    { key: 'botiquin',              item: 'Botiquín de primeros auxilios',     norma: 'Dotación y contenido — Resolución 705/2007 · Resolución 0312/2019',                              periodicidad: 'Mensual' },
+    { key: 'cinta_antideslizante',  item: 'Cinta antideslizante en escaleras', norma: 'Acabado antideslizante en huellas — NSR-10 Título K · Resolución 2400/1979',                     periodicidad: 'Cada 6 meses' },
+    { key: 'luces_funcional',       item: 'Luces de emergencia',               norma: 'Prueba funcional — NTC 2050 / NFPA 101',                                                          periodicidad: 'Mensual' },
+    { key: 'luces_autonomia',       item: 'Luces de emergencia',               norma: 'Prueba de autonomía (90 min) — NFPA 101 / NTC 2050',                                             periodicidad: 'Anual' },
+    { key: 'senalizacion',          item: 'Señalización de seguridad',         norma: 'Colores y señales de seguridad — NTC 1461 · Resolución 2400/1979',                              periodicidad: 'Anual' }
 ];
 
 function initDashboard() {
