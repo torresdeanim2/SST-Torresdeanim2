@@ -764,7 +764,7 @@ async function cargarRegistrosInducciones() {
                     <td>
                         <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
                         <button class="btn-icon" onclick="editarInduccion('${id}', window._inducciones_cargadas['${id}'])" title="Editar">✏️</button>
-                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('inducciones', '${id}')" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -1187,7 +1187,7 @@ async function cargarRegistrosInspecciones() {
                     <td><span class="badge badge-${data.nivelRiesgo === 'Sin hallazgos' ? 'success' : 'warning'}">${data.nivelRiesgo}</span></td>
                     <td>
                         <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver">👁️</button>
-                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('inspecciones', '${id}')" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -1486,7 +1486,7 @@ async function cargarRegistrosMantenimientos() {
                     <td><span class="badge badge-${data.estado === 'Completado' ? 'success' : 'warning'}">${data.estado}</span></td>
                     <td>
                         <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
-                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('mantenimientos', '${id}')" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -1865,7 +1865,7 @@ async function cargarRegistrosContratistas() {
                     </td>
                     <td>
                         <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
-                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('contratistas', '${id}')" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -2260,7 +2260,7 @@ async function cargarRegistrosAccidentes() {
                     <td>${data.reportes.reportadoARL ? '✅' : '❌'} ARL<br>${data.reportes.furatDiligenciado ? '✅' : '❌'} FURAT</td>
                     <td>
                         <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver">👁️</button>
-                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('accidentes', '${id}')" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -2658,7 +2658,7 @@ async function cargarRegistrosSimulacros() {
                     <td><span style="color: ${calificacionColor}; font-weight: 600;">${data.calificacion}</span></td>
                     <td>
                         <button class="btn-icon" onclick="verDetalle('${id}')" title="Ver detalles">👁️</button>
-                        <button class="btn-icon" onclick="eliminarRegistro('${id}')" title="Eliminar">🗑️</button>
+                        <button class="btn-icon" onclick="eliminarRegistro('simulacros', '${id}')" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -2894,10 +2894,22 @@ window.addEventListener('DOMContentLoaded', cargarRegistrosSimulacros);
             alert('Ver detalle: ' + id);
         }
 
-        function eliminarRegistro(id) {
-            if (confirm('¿Eliminar este registro?')) {
-                // Implementar eliminación
-                alert('Registro eliminado: ' + id);
+        async function eliminarRegistro(coleccion, id) {
+            if (!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
+            try {
+                await database.ref(`edificios/${EDIFICIO_ID}/${coleccion}/${id}`).remove();
+                const refrescar = {
+                    inducciones:    cargarRegistrosInducciones,
+                    inspecciones:   cargarRegistrosInspecciones,
+                    mantenimientos: cargarRegistrosMantenimientos,
+                    contratistas:   cargarRegistrosContratistas,
+                    accidentes:     cargarRegistrosAccidentes,
+                    simulacros:     cargarRegistrosSimulacros
+                };
+                if (refrescar[coleccion]) refrescar[coleccion]();
+                alert('✅ Registro eliminado correctamente.');
+            } catch (e) {
+                alert('❌ Error al eliminar el registro: ' + e.message);
             }
         }
     </script>
