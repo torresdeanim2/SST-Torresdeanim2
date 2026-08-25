@@ -25,6 +25,17 @@ function initEjecucion() {
 
     sec.innerHTML =
         '<div class="card">' +
+          '<div class="card-header"><span class="card-title">🗓️ ¿Qué hice y qué me falta por mes?</span></div>' +
+          '<p style="color:var(--text-gray);font-size:0.85rem;margin-bottom:15px;">Estado de actividades mensuales — datos en tiempo real desde Firebase</p>' +
+          '<div class="table-wrap">' +
+            '<table class="ej-table">' +
+              '<thead><tr><th>Mes</th><th>📋 Supervisión</th><th>🔍 Inspección</th><th>🎓 Inducción</th><th>🔧 Mantenimiento</th><th>Total</th><th>Estado</th></tr></thead>' +
+              '<tbody id="qh-tbody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-gray);">⏳ Cargando datos...</td></tr></tbody>' +
+            '</table>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="card">' +
           '<div class="card-header">' +
             '<span class="card-title">✅ Ejecución Constante 2026</span>' +
             '<button class="btn-secondary" style="padding:7px 16px;font-size:0.83rem;" onclick="generarResumenWhatsApp()">📱 Resumen WhatsApp</button>' +
@@ -62,6 +73,89 @@ function initEjecucion() {
         '</div>';
 
     cargarEjecucion();
+    cargarQueHiceTabla();
+}
+
+// ─── ¿Qué hice y qué me falta por mes? (datos reales de Firebase) ──
+function filtrarPorMesQH(items, mes, anio) {
+    var periodoStr = EJ_MESES_COMPLETO[mes] + ' ' + anio;
+    return (items || []).filter(function(item) {
+        if (!item) return false;
+        var c = item.fecha || item.fechaActividad || item.date || '';
+        if (c) {
+            try {
+                var fechaStr = String(c).length === 10 ? c + 'T12:00:00' : c;
+                var f = new Date(fechaStr);
+                if (!isNaN(f)) return f.getMonth() === mes && f.getFullYear() === anio;
+            } catch(e) {}
+        }
+        if (item.periodo) return item.periodo.indexOf(periodoStr) !== -1 || item.periodo.indexOf(EJ_MESES_COMPLETO[mes]) !== -1;
+        return false;
+    });
+}
+
+function cargarQueHiceTabla() {
+    var cfg = window.edificioConfig;
+    var mesInicio = cfg.mes_inicio || 1;
+    var anio = new Date().getFullYear();
+    var mesActual = new Date().getMonth();
+    var tbody = document.getElementById('qh-tbody');
+    if (!tbody) return;
+
+    window.db.ref('edificios/' + cfg.id).once('value').then(function(snap) {
+        var n = snap.val() || {};
+        var supervisiones  = n.supervisiones  ? Object.values(n.supervisiones)  : [];
+        var inspecciones   = n.inspecciones   ? Object.values(n.inspecciones)   : [];
+        var inducciones    = n.inducciones    ? Object.values(n.inducciones)    : [];
+        var mantenimientos = n.mantenimientos ? Object.values(n.mantenimientos) : [];
+
+        var html = '';
+        for (var m = mesInicio; m <= 12; m++) {
+            var mIdx = m - 1;
+            var sup  = filtrarPorMesQH(supervisiones,  mIdx, anio).length;
+            var ins  = filtrarPorMesQH(inspecciones,   mIdx, anio).length;
+            var ind  = filtrarPorMesQH(inducciones,    mIdx, anio).length;
+            var mant = filtrarPorMesQH(mantenimientos, mIdx, anio).length;
+            var total = sup + ins + ind + mant;
+            var esFuturo = mIdx > mesActual;
+            var esActual = mIdx === mesActual;
+            var esPasado = mIdx < mesActual;
+
+            var cellText = function(val) {
+                if (esFuturo) return '<span style="color:#94a3b8;">—</span>';
+                if (val > 0)  return '<span style="color:#059669;font-weight:700;">✓ ' + val + '</span>';
+                if (esPasado) return '<span style="color:#dc2626;font-weight:700;">✗ 0</span>';
+                return '<span style="color:#94a3b8;">Pendiente</span>';
+            };
+
+            var estadoBadge;
+            if (esFuturo) {
+                estadoBadge = '<span style="color:#94a3b8;font-size:0.8rem;">Próximo</span>';
+            } else if (total >= 4) {
+                estadoBadge = '<span class="badge badge-success">Completo ✅</span>';
+            } else if (total > 0) {
+                estadoBadge = '<span class="badge badge-warning">Parcial 🟡</span>';
+            } else if (esPasado) {
+                estadoBadge = '<span class="badge badge-danger">Sin registro ⚠️</span>';
+            } else {
+                estadoBadge = '<span class="badge" style="background:#dbeafe;color:#1e40af;">Mes actual 📌</span>';
+            }
+
+            html += '<tr' + (esActual ? ' style="background:#eff6ff;"' : '') + '>' +
+                '<td style="font-weight:600;text-align:left;padding-left:12px;">' + (esActual ? '👉 ' : '') + EJ_MESES_COMPLETO[mIdx] + '</td>' +
+                '<td style="text-align:center;">' + cellText(sup)  + '</td>' +
+                '<td style="text-align:center;">' + cellText(ins)  + '</td>' +
+                '<td style="text-align:center;">' + cellText(ind)  + '</td>' +
+                '<td style="text-align:center;">' + cellText(mant) + '</td>' +
+                '<td style="text-align:center;font-weight:700;">'  + (esFuturo ? '—' : total) + '</td>' +
+                '<td style="text-align:center;">' + estadoBadge + '</td>' +
+                '</tr>';
+        }
+        tbody.innerHTML = html;
+    }).catch(function(err) {
+        console.error('Error tabla qué hice:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;">Error cargando datos</td></tr>';
+    });
 }
 
 var _ejData = {};
