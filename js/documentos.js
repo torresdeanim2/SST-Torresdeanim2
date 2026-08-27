@@ -32,10 +32,11 @@ function initDocumentos() {
         '</div>' +
 
         '<div class="card">' +
-          '<div class="card-header"><span class="card-title">📊 Informes Mensuales 2026</span>' +
+          '<div class="card-header"><span class="card-title">📁 Informes y Cuentas por Cobrar 2026</span>' +
           '<button class="btn-secondary" style="padding:6px 14px;font-size:0.82rem;" onclick="window.mostrarSeccion(\'herramientas\')">Generar informe →</button></div>' +
+          '<p style="color:var(--text-gray);font-size:0.85rem;margin-bottom:14px;">Documentos mensuales del Sistema de Gestión SST — vincula el enlace de Google Drive de cada mes.</p>' +
           '<div class="table-wrap"><table>' +
-            '<thead><tr><th>Mes</th><th>Estado</th><th>Enlace Google Drive</th><th>Acción</th></tr></thead>' +
+            '<thead><tr><th>Mes</th><th style="text-align:center;">📋 Informe Mensual SST</th><th style="text-align:center;">💰 Cuenta por Cobrar</th></tr></thead>' +
             '<tbody id="tbody-informes"></tbody>' +
           '</table></div>' +
         '</div>' +
@@ -95,37 +96,58 @@ function cargarDocumentosBase() {
 function cargarInformesYCuentas() {
     var cfg = window.edificioConfig;
     var mesInicio = cfg.mes_inicio || 1;
-    window.db.ref('edificios/' + cfg.id + '/informes').once('value').then(function(snap) {
-        var informes = snap.val() || {};
+    Promise.all([
+        window.db.ref('edificios/' + cfg.id + '/informes').once('value'),
+        window.db.ref('edificios/' + cfg.id + '/cuentas').once('value')
+    ]).then(function(snaps) {
+        var informes = snaps[0].val() || {};
+        var cuentas  = snaps[1].val() || {};
         var hoy = new Date();
         var mesActual = hoy.getMonth() + 1;
         var htmlI = '';
 
         for (var m = mesInicio; m <= 12; m++) {
             var infoI = informes['mes' + m] || {};
+            var infoC = cuentas['mes' + m]  || {};
             var esPasado = m < mesActual;
             var esActual = m === mesActual;
-            htmlI += mkFilaDoc(m, infoI, 'informes', esPasado, esActual);
+            htmlI += mkFilaDocCombinada(m, infoI, infoC, esPasado, esActual);
         }
         document.getElementById('tbody-informes').innerHTML = htmlI;
     });
 }
 
-function mkFilaDoc(numMes, info, tipo, esPasado, esActual) {
+function mkCeldaDoc(numMes, info, tipo, esPasado, esActual) {
     var tieneLink = !!info.enlace;
-    var estadoBadge = tieneLink ? '<span class="badge badge-success">✅ Disponible</span>'
-        : (esPasado ? '<span class="badge badge-danger">⚠️ Pendiente</span>'
-        : (esActual  ? '<span class="badge badge-warning">⏳ Mes actual</span>'
-        : '<span class="badge badge-gray">—</span>'));
+    if (!tieneLink) {
+        var pendienteLbl = esPasado ? '⚠️ Pendiente' : (esActual ? '⏳ Mes actual' : '—');
+        return '<div style="text-align:center;">' +
+            '<span class="badge ' + (esPasado ? 'badge-danger' : (esActual ? 'badge-warning' : 'badge-gray')) + '" style="margin-bottom:5px;display:inline-block;">' + pendienteLbl + '</span><br>' +
+            '<button class="ej-link-btn" onclick="abrirModalEnlace(\'' + tipo + '\',\'mes' + numMes + '\',\'mes ' + numMes + '\')">🔗 Vincular</button>' +
+            '</div>';
+    }
+    var mesLabel = MESES_DOCS[numMes-1] + ' 2026';
+    var etiqueta = tipo === 'informes' ? 'Informe SST' : 'Cuenta por Cobrar';
+    return '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;align-items:center;">' +
+        '<button class="btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="window.open(\'' + info.enlace.replace(/'/g,"\\'") + '\',\'_blank\')">📄 Ver</button>' +
+        '<button class="btn-secondary" style="padding:5px 12px;font-size:0.8rem;background:#25D366;color:#fff;border-color:#25D366;" onclick="compartirWA(\'' + etiqueta + '\',\'' + mesLabel + '\',\'' + info.enlace.replace(/'/g,"\\'") + '\')">📲 WhatsApp</button>' +
+        '<button class="ej-link-btn tiene-link" onclick="abrirModalEnlace(\'' + tipo + '\',\'mes' + numMes + '\',\'mes ' + numMes + '\')">✏️</button>' +
+        '</div>';
+}
 
+function mkFilaDocCombinada(numMes, infoInforme, infoCuenta, esPasado, esActual) {
     return '<tr>' +
         '<td style="font-weight:600;">' + MESES_DOCS[numMes-1] + '</td>' +
-        '<td>' + estadoBadge + '</td>' +
-        '<td>' + (tieneLink ? '<a href="' + info.enlace + '" target="_blank" style="color:var(--accent);">📂 Abrir en Drive</a>' : '—') + '</td>' +
-        '<td><button class="ej-link-btn' + (tieneLink ? ' tiene-link' : '') + '" ' +
-            'onclick="abrirModalEnlace(\'' + tipo + '\',\'mes' + numMes + '\',' + '\'mes ' + numMes + '\')">Vincular</button></td>' +
+        '<td style="padding:8px;">' + mkCeldaDoc(numMes, infoInforme, 'informes', esPasado, esActual) + '</td>' +
+        '<td style="padding:8px;">' + mkCeldaDoc(numMes, infoCuenta,  'cuentas',  esPasado, esActual) + '</td>' +
         '</tr>';
 }
+
+window.compartirWA = function(tipo, mes, link) {
+    var cfg = window.edificioConfig;
+    var texto = encodeURIComponent('Hola, te comparto el ' + tipo + ' de ' + mes + ' — ' + cfg.nombre + ':\n' + link);
+    window.open('https://wa.me/?text=' + texto, '_blank');
+};
 
 // ─── Modal enlace ────────────────────────────────
 var _modalEnlaceRuta = '';
