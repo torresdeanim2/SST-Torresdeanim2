@@ -59,6 +59,20 @@ function initDashboard() {
           '</div>' +
         '</div>' +
 
+        '<div class="card" style="margin-bottom:20px;border:2px solid #dc2626;background:#fef2f2;">' +
+          '<div class="card-header"><span class="card-title" style="color:#b91c1c;">🚨 Simulacro Nacional 2026 — Sismo</span>' +
+          '<span class="badge badge-danger">21 oct · 10:00 a.m.</span></div>' +
+          '<p style="font-size:0.9rem;color:var(--text-gray);margin:6px 0 12px;">' +
+            'Ejercicio coordinado por la UNGRD. Cuando suene la alarma: <strong>Agáchate, Cúbrete, Agárrate</strong>. ' +
+            'Al terminar el movimiento, evacúa sin correr y sin ascensor hacia el punto de encuentro.' +
+          '</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+            '<a class="btn-primary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="cartelera-simulacro-nacional-2026.html" target="_blank">🖨️ Cartelera imprimible</a>' +
+            '<a class="btn-secondary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="induccion-individual.html" target="_blank">🎓 Curso del delegado</a>' +
+            '<a class="btn-secondary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="tools/simulacros.html" target="_blank">📝 Registrar simulacro</a>' +
+          '</div>' +
+        '</div>' +
+
         '<div id="dash-banner-cotiz" class="alert-banner hidden" style="margin-bottom:20px;">' +
           '<span class="ab-icon">💰</span>' +
           '<div class="ab-body"><div class="ab-title">Cotizaciones pendientes</div>' +
