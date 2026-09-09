@@ -111,12 +111,37 @@ function initDashboard() {
         '</div>' +
 
         '<div class="card">' +
-          '<div class="card-header"><span class="card-title">🗺️ Mapa de Evacuación</span>' +
-          '<a href="assets/plano.png" target="_blank" class="btn-secondary" style="padding:6px 14px;font-size:0.82rem;">Ver en grande</a></div>' +
-          '<div style="text-align:center;">' +
-            '<img src="assets/plano.png" alt="Plano de evacuación" ' +
-            'style="max-width:100%;border-radius:10px;border:2px solid var(--border);" ' +
-            'onerror="this.outerHTML=\'<p style=\\\"padding:30px;color:var(--text-gray);text-align:center;\\\">📌 Plano aún no cargado. Reemplaza assets/plano.png con el plano de evacuación del edificio.</p>\'">' +
+          '<div class="card-header"><span class="card-title">🗺️ Mapas de Evacuación</span></div>' +
+          '<p style="font-size:0.85rem;color:var(--text-gray);margin:4px 0 14px;">Torres de Anim II — un mapa por nivel.</p>' +
+
+          '<div style="margin-bottom:18px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">' +
+              '<strong style="font-size:0.9rem;">🏢 Primer piso — Recepción y acceso</strong>' +
+              '<a href="assets/plano-primer-piso.png" target="_blank" class="btn-secondary" style="padding:5px 12px;font-size:0.78rem;white-space:nowrap;">Ver en grande</a>' +
+            '</div>' +
+            '<img src="assets/plano-primer-piso.png" alt="Mapa de evacuación primer piso — Torres de Anim II" ' +
+            'style="max-width:100%;border-radius:10px;border:2px solid var(--border);display:block;" ' +
+            'onerror="this.outerHTML=\'<p style=\\\"padding:20px;color:var(--text-gray);\\\">📌 Falta assets/plano-primer-piso.png</p>\'">' +
+          '</div>' +
+
+          '<div style="margin-bottom:18px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">' +
+              '<strong style="font-size:0.9rem;">🅿️ Sótano — Garajes y parqueaderos</strong>' +
+              '<a href="assets/plano-sotano.png" target="_blank" class="btn-secondary" style="padding:5px 12px;font-size:0.78rem;white-space:nowrap;">Ver en grande</a>' +
+            '</div>' +
+            '<img src="assets/plano-sotano.png" alt="Mapa de evacuación sótano — Torres de Anim II" ' +
+            'style="max-width:100%;border-radius:10px;border:2px solid var(--border);display:block;" ' +
+            'onerror="this.outerHTML=\'<p style=\\\"padding:20px;color:var(--text-gray);\\\">📌 Falta assets/plano-sotano.png</p>\'">' +
+          '</div>' +
+
+          '<div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">' +
+              '<strong style="font-size:0.9rem;">🌥️ Terraza</strong>' +
+              '<a href="assets/plano-terraza.png" target="_blank" class="btn-secondary" style="padding:5px 12px;font-size:0.78rem;white-space:nowrap;">Ver en grande</a>' +
+            '</div>' +
+            '<img src="assets/plano-terraza.png" alt="Mapa de evacuación terraza — Torres de Anim II" ' +
+            'style="max-width:100%;border-radius:10px;border:2px solid var(--border);display:block;" ' +
+            'onerror="this.outerHTML=\'<p style=\\\"padding:20px;color:var(--text-gray);\\\">📌 Falta assets/plano-terraza.png</p>\'">' +
           '</div>' +
         '</div>';
 
