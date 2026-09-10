@@ -15,38 +15,18 @@ var EJ_MESES_COMPLETO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
 function initEjecucion() {
     var sec = document.getElementById('section-ejecucion');
     if (!sec) return;
-    var cfg = window.edificioConfig;
-    var mesInicio = cfg.mes_inicio || 1;
-
-    var mesesHeader = '';
-    for (var mh = mesInicio; mh <= 12; mh++) {
-        mesesHeader += '<th class="ej-mes-header" style="text-align:center;min-width:55px;">' + EJ_MESES[mh - 1] + '</th>';
-    }
 
     sec.innerHTML =
         '<div class="card">' +
-          '<div class="card-header"><span class="card-title">🗓️ ¿Qué hice y qué me falta por mes?</span></div>' +
+          '<div class="card-header">' +
+            '<span class="card-title">🗓️ ¿Qué hice y qué me falta por mes?</span>' +
+            '<button class="btn-secondary" style="padding:7px 16px;font-size:0.83rem;" onclick="generarResumenWhatsApp()">📱 Resumen WhatsApp</button>' +
+          '</div>' +
           '<p style="color:var(--text-gray);font-size:0.85rem;margin-bottom:15px;">Estado de actividades mensuales — datos en tiempo real desde Firebase</p>' +
           '<div class="table-wrap">' +
             '<table class="ej-table">' +
               '<thead><tr><th>Mes</th><th>📋 Supervisión</th><th>🔍 Inspección</th><th>🎓 Inducción</th><th>🔧 Mantenimiento</th><th>Total</th><th>Estado</th></tr></thead>' +
               '<tbody id="qh-tbody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-gray);">⏳ Cargando datos...</td></tr></tbody>' +
-            '</table>' +
-          '</div>' +
-        '</div>' +
-
-        '<div class="card">' +
-          '<div class="card-header">' +
-            '<span class="card-title">✅ Ejecución Constante 2026</span>' +
-            '<button class="btn-secondary" style="padding:7px 16px;font-size:0.83rem;" onclick="generarResumenWhatsApp()">📱 Resumen WhatsApp</button>' +
-          '</div>' +
-          '<p style="color:var(--text-gray);font-size:0.88rem;margin-bottom:16px;">Marca cada actividad como completada al realizarla. Los cambios se guardan automáticamente en Firebase.</p>' +
-          '<div class="table-wrap">' +
-            '<table class="ej-table">' +
-              '<thead><tr><th>Actividad</th>' +
-              mesesHeader +
-              '</tr></thead>' +
-              '<tbody id="ej-tbody"></tbody>' +
             '</table>' +
           '</div>' +
         '</div>' +
@@ -158,40 +138,15 @@ function cargarQueHiceTabla() {
     });
 }
 
+// ─── Observaciones por mes ───────────────────────
 var _ejData = {};
 
 function cargarEjecucion() {
     var cfg = window.edificioConfig;
     window.db.ref('edificios/' + cfg.id + '/ejecucion').on('value', function(snap) {
         _ejData = snap.val() || {};
-        renderEjecucionTabla();
         renderNotasMes();
     });
-}
-
-function renderEjecucionTabla() {
-    var cfg = window.edificioConfig;
-    var mesInicio = cfg.mes_inicio || 1;
-    var tbody = document.getElementById('ej-tbody');
-    if (!tbody) return;
-    var html = '';
-
-    EJ_ACTOS.forEach(function(act) {
-        html += '<tr><td style="font-weight:600;font-size:0.88rem;">' + act.label + '</td>';
-        for (var m = mesInicio; m <= 12; m++) {
-            var clv = 'mes' + m;
-            var completado = _ejData[clv] && _ejData[clv][act.id] && _ejData[clv][act.id].completado;
-            var enlace = _ejData[clv] && _ejData[clv][act.id] && _ejData[clv][act.id].enlace;
-            html += '<td class="ej-cell">' +
-                '<input type="checkbox" class="ej-check" ' + (completado ? 'checked' : '') +
-                ' onchange="toggleEjecucion(\'' + clv + '\',\'' + act.id + '\',this.checked)" title="Marcar como realizado">' +
-                '<br><button class="ej-link-btn' + (enlace ? ' tiene-link' : '') + '" style="margin-top:3px;" ' +
-                'onclick="abrirModalEnlaceEj(\'' + clv + '\',\'' + act.id + '\')">📎</button>' +
-                '</td>';
-        }
-        html += '</tr>';
-    });
-    tbody.innerHTML = html;
 }
 
 function renderNotasMes() {
@@ -216,88 +171,63 @@ function renderNotasMes() {
     grid.innerHTML = html;
 }
 
-window.toggleEjecucion = function(clvMes, actId, checked) {
-    var cfg = window.edificioConfig;
-    var ref = window.db.ref('edificios/' + cfg.id + '/ejecucion/' + clvMes + '/' + actId);
-    ref.update({ completado: checked, fecha: checked ? new Date().toLocaleDateString('es-CO') : null })
-        .then(function() { mostrarToast(checked ? '✅ Actividad completada' : 'Actividad desmarcada'); })
-        .catch(function() { mostrarToast('Error al guardar', 'error'); });
-};
-
 window.guardarObservacion = function(clvMes, texto) {
     var cfg = window.edificioConfig;
     window.db.ref('edificios/' + cfg.id + '/ejecucion/' + clvMes).update({ observacion: texto });
 };
 
-// ─── Modal enlace ejecución ──────────────────────
-var _ejLinkRuta = '';
-window.abrirModalEnlaceEj = function(clvMes, actId) {
-    _ejLinkRuta = 'edificios/' + window.edificioConfig.id + '/ejecucion/' + clvMes + '/' + actId;
-    // Reutilizar modal de documentos
-    document.getElementById('modal-enlace-titulo').textContent = '🔗 Enlace soporte: ' + actId + ' — ' + clvMes;
-    document.getElementById('modal-enlace-input').value = '';
-    document.getElementById('modal-enlace').classList.remove('hidden');
-    // Temporalmente redirigir confirmar
-    window._confirmEnlaceOverride = function() {
-        var val = document.getElementById('modal-enlace-input').value.trim();
-        if (!val || !val.startsWith('http')) { mostrarToast('Enlace no válido', 'error'); return; }
-        window.db.ref(_ejLinkRuta).update({ enlace: val }).then(function() {
-            mostrarToast('✅ Enlace guardado', 'success');
-            cerrarModalEnlace();
-        });
-    };
-};
-
-// Sobrescribir confirmarEnlace si hay override
-var _origConfirmarEnlace = window.confirmarEnlace;
-window.confirmarEnlace = function() {
-    if (window._confirmEnlaceOverride) {
-        var fn = window._confirmEnlaceOverride;
-        window._confirmEnlaceOverride = null;
-        fn();
-    } else {
-        _origConfirmarEnlace();
-    }
-};
-
-// ─── Resumen WhatsApp ────────────────────────────
+// ─── Resumen WhatsApp (datos reales de Firebase) ──
 function generarResumenWhatsApp() {
     var cfg = window.edificioConfig;
     var hoy = new Date();
-    var mesActual = hoy.getMonth() + 1;
-    var mesNombre = EJ_MESES_COMPLETO[mesActual - 1];
-    var clv = 'mes' + mesActual;
-    var mesDat = _ejData[clv] || {};
+    var mesIdx = hoy.getMonth();
+    var anio = hoy.getFullYear();
+    var mesNombre = EJ_MESES_COMPLETO[mesIdx];
+    var clv = 'mes' + (mesIdx + 1);
 
-    var lineas = [
-        '╔══════════════════════════╗',
-        '║  INFORME SST — ' + mesNombre.toUpperCase().substring(0,3) + ' 2026   ║',
-        '╚══════════════════════════╝',
-        '',
-        cfg.emoji + ' ' + cfg.nombre,
-        '📍 ' + cfg.direccion,
-        '📅 ' + hoy.toLocaleDateString('es-CO', { dateStyle: 'full' }),
-        ''
-    ];
+    window.db.ref('edificios/' + cfg.id).once('value').then(function(snap) {
+        var n = snap.val() || {};
+        var conteos = {
+            supervision:   filtrarPorMesQH(n.supervisiones  ? Object.values(n.supervisiones)  : [], mesIdx, anio).length,
+            inspeccion:    filtrarPorMesQH(n.inspecciones   ? Object.values(n.inspecciones)   : [], mesIdx, anio).length,
+            induccion:     filtrarPorMesQH(n.inducciones    ? Object.values(n.inducciones)    : [], mesIdx, anio).length,
+            mantenimiento: filtrarPorMesQH(n.mantenimientos ? Object.values(n.mantenimientos) : [], mesIdx, anio).length
+        };
+        var observacion = (n.ejecucion && n.ejecucion[clv] && n.ejecucion[clv].observacion) || '';
 
-    var hayPendientes = false;
-    EJ_ACTOS.forEach(function(act) {
-        var info = mesDat[act.id] || {};
-        var ok = info.completado;
-        if (!ok) hayPendientes = true;
-        lineas.push((ok ? '✅' : '⏳') + ' ' + act.label.replace(/^[^ ]+ /,'') + (ok && info.fecha ? ' — ' + info.fecha : ''));
+        var lineas = [
+            '╔══════════════════════════╗',
+            '║  INFORME SST — ' + mesNombre.toUpperCase().substring(0,3) + ' 2026   ║',
+            '╚══════════════════════════╝',
+            '',
+            cfg.emoji + ' ' + cfg.nombre,
+            '📍 ' + cfg.direccion,
+            '📅 ' + hoy.toLocaleDateString('es-CO', { dateStyle: 'full' }),
+            ''
+        ];
+
+        var hayPendientes = false;
+        EJ_ACTOS.forEach(function(act) {
+            var cant = conteos[act.id] || 0;
+            if (cant === 0) hayPendientes = true;
+            lineas.push((cant > 0 ? '✅' : '⏳') + ' ' + act.label.replace(/^[^ ]+ /,'') +
+                        (cant > 0 ? ' — ' + cant + (cant === 1 ? ' registro' : ' registros') : ''));
+        });
+
+        lineas.push('');
+        if (observacion) { lineas.push('📝 ' + observacion); lineas.push(''); }
+        lineas.push(hayPendientes ? '⚠️ Hay actividades sin registro este mes.' : '🎯 Todas las actividades del mes tienen registro.');
+        lineas.push('');
+        lineas.push('—');
+        lineas.push('Carla Castellano Madriz | C.E. 679955');
+        lineas.push('Compliance Pro · 2026');
+
+        document.getElementById('wa-texto').textContent = lineas.join('\n');
+        document.getElementById('modal-wa').classList.remove('hidden');
+    }).catch(function(err) {
+        console.error('Error resumen WhatsApp:', err);
+        mostrarToast('Error al generar el resumen', 'error');
     });
-
-    lineas.push('');
-    if (mesDat.observacion) { lineas.push('📝 ' + mesDat.observacion); lineas.push(''); }
-    lineas.push(hayPendientes ? '⚠️ Hay actividades pendientes este mes.' : '🎯 Todas las actividades del mes completadas.');
-    lineas.push('');
-    lineas.push('—');
-    lineas.push('Carla Castellano Madriz | C.E. 679955');
-    lineas.push('Compliance Pro · 2026');
-
-    document.getElementById('wa-texto').textContent = lineas.join('\n');
-    document.getElementById('modal-wa').classList.remove('hidden');
 }
 
 window.copiarTextoWA = function() {
