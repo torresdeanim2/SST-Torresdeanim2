@@ -70,7 +70,8 @@ function initDashboard() {
             '<a class="btn-primary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="cartelera-simulacro-nacional-2026.html" target="_blank">🖨️ Cartelera imprimible</a>' +
             '<a class="btn-secondary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="induccion-individual.html" target="_blank">🎓 Curso del delegado</a>' +
             '<a class="btn-secondary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="tools/simulacros.html" target="_blank">📝 Registrar simulacro</a>' +
-            '<a class="btn-secondary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="manual-capacitacion-simulacro-nacional-2026.html" target="_blank">📘 Manual imprimible</a>' +
+            '<a class="btn-secondary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="manual-capacitacion-simulacro-nacional-2026.html" target="_blank">📘 Manual del simulacro</a>' +
+            '<a class="btn-secondary" style="padding:8px 16px;font-size:0.83rem;text-decoration:none;" href="manual-completo-induccion-sst.html" target="_blank">📚 Manual completo de inducción</a>' +
           '</div>' +
         '</div>' +
 
