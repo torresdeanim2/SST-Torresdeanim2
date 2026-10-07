@@ -8,6 +8,8 @@
 
     <!-- Firebase v9 compat -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="js/sst-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
@@ -120,8 +122,8 @@
             </p>
             <form id="modal-login-form" autocomplete="off">
                 <div class="form-group">
-                    <label for="modal-login-user">Usuario</label>
-                    <input type="text" id="modal-login-user" placeholder="usuario" required autocomplete="off">
+                    <label for="modal-login-user">Correo</label>
+                    <input type="email" id="modal-login-user" placeholder="tu correo de Compliance Pro" required autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label for="modal-login-pass">Contraseña</label>

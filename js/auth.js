@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!form) return;
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         errMsg.classList.add('hidden');
 
@@ -24,13 +24,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        if (usuario === cfg.admin_user && contrasena === cfg.admin_pass) {
+        if (await window.sstAuth.entrar(usuario, contrasena)) {
             window.hacerLogin();
         } else {
-            errMsg.textContent = 'Usuario o contraseña incorrectos.';
+            errMsg.textContent = window.sstAuth.ultimoError || 'Correo o contraseña incorrectos.';
             errMsg.classList.remove('hidden');
             document.getElementById('modal-login-pass').value = '';
         }
     });
 
+});
+
+// La sesión recordada solo vale si Firebase Auth confirma que hay usuario
+document.addEventListener('sst-auth', function(e) {
+    if (!e.detail && window.isLoggedIn && window.hacerLogout) window.hacerLogout();
 });

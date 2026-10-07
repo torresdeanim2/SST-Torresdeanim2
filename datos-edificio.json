@@ -20,7 +20,6 @@
   "github_org": "torresdeanim2",
   "repo_name": "sst-anim2",
   "admin_user": "c3madriz",
-  "admin_pass": "anim2026",
   "contratistas": [
     { "nombre": "Seguridad G2 Ltda", "nit": "901192349-6", "servicio": "Conserjería" },
     { "nombre": "Proarrendadores SAS", "nit": "900170505-0", "servicio": "Aseo" }

@@ -98,6 +98,7 @@ window.hacerLogin = function() {
 
 window.hacerLogout = function() {
     window.isLoggedIn = false;
+    if (window.sstAuth) window.sstAuth.salir();
     localStorage.removeItem('sst_' + window.edificioConfig.id + '_admin');
     var badge   = document.getElementById('admin-badge');
     var btnOut  = document.getElementById('btn-logout');
